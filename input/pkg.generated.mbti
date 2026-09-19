@@ -1,0 +1,146 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/input"
+
+import {
+  "codemoonbit/codemoonbit/core",
+  "codemoonbit/codemoonbit/state",
+}
+
+// Values
+pub fn add_cursor_above(@state.EditorState) -> @state.TransactionSpec
+
+pub fn add_cursor_below(@state.EditorState) -> @state.TransactionSpec
+
+pub fn add_cursor_to_line_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn binding_spec(KeyEvent) -> String
+
+pub fn count_indent(String, tab_size? : Int) -> Int
+
+pub fn cursor_char_left(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_char_right(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_doc_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_doc_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_line_down(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_line_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_line_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_line_up(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_visual_line_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn default_keymap() -> Array[KeyBinding]
+
+pub fn delete_char_backward(@state.EditorState) -> @state.TransactionSpec
+
+pub fn delete_char_forward(@state.EditorState) -> @state.TransactionSpec
+
+pub fn delete_group_backward(@state.EditorState) -> @state.TransactionSpec
+
+pub fn delete_to_line_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn delete_to_line_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn indent_less(@state.EditorState) -> @state.TransactionSpec
+
+pub fn indent_more(@state.EditorState) -> @state.TransactionSpec
+
+pub fn insert_newline(@state.EditorState) -> @state.TransactionSpec
+
+pub fn insert_tab(@state.EditorState, indent_unit? : Int) -> @state.TransactionSpec
+
+pub fn insert_text(@state.EditorState, String) -> @state.TransactionSpec
+
+pub fn key_binding(key~ : String, run~ : (@state.EditorState) -> @state.TransactionSpec?) -> KeyBinding
+
+pub fn keymap(Array[KeyBinding]) -> @state.Extension
+
+pub let keymap_facet : @state.Facet[Array[KeyBinding]]
+
+pub fn leading_whitespace(String) -> String
+
+pub fn line_indent(@core.Text, Int, tab_size? : Int) -> Int
+
+pub let mod_alt : Int
+
+pub let mod_ctrl : Int
+
+pub let mod_meta : Int
+
+pub let mod_shift : Int
+
+pub fn next_char_boundary(@core.Text, Int) -> Int
+
+pub fn normalize_key_name(String) -> String
+
+pub fn page_down(@state.EditorState, lines? : Int) -> @state.TransactionSpec
+
+pub fn page_up(@state.EditorState, lines? : Int) -> @state.TransactionSpec
+
+pub fn prev_char_boundary(@core.Text, Int) -> Int
+
+pub fn redo_cmd(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn run_keymap_facet(@state.EditorState, KeyEvent) -> @state.TransactionSpec?
+
+pub fn select_all_cmd(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_char_left(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_char_right(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_doc_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_doc_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_line(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_line_down(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_line_end(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_line_start(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_line_up(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_next_occurrence(@state.EditorState, selection_text~ : String) -> @state.TransactionSpec?
+
+pub fn select_next_occurrence_cmd(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn toggle_line_comment(@state.EditorState, token? : String) -> @state.TransactionSpec
+
+pub fn undo_cmd(@state.EditorState) -> @state.TransactionSpec?
+
+// Errors
+
+// Types and methods
+pub(all) struct KeyBinding {
+  key : String
+  run : (@state.EditorState) -> @state.TransactionSpec?
+  shift : (@state.EditorState) -> @state.TransactionSpec?
+}
+
+pub(all) struct KeyEvent {
+  key : String
+  code : String
+  mods : Int
+} derive(Eq)
+
+pub struct Keymap {
+  // private fields
+}
+pub fn Keymap::add(Self, KeyBinding) -> Self
+pub fn Keymap::bind(Self, Array[KeyBinding]) -> Self
+pub fn Keymap::bindings(Self) -> Array[KeyBinding]
+pub fn Keymap::new() -> Self
+pub fn Keymap::run(Self, @state.EditorState, KeyEvent) -> @state.TransactionSpec?
+
+// Type aliases
+
+// Traits
