@@ -1,0 +1,50 @@
+import {
+  "codemoonbit/codemoonbit/core",
+  "codemoonbit/codemoonbit/state",
+  "codemoonbit/codemoonbit/search",
+  "codemoonbit/codemoonbit/input",
+  "codemoonbit/codemoonbit/ffi",
+  "codemoonbit/codemoonbit/editor",
+}
+
+pkgtype(kind: "executable")
+
+supported_targets = "wasm-gc"
+
+options(
+  link: {
+    "wasm-gc": {
+      "exports": [
+        "cm_create",
+        "cm_destroy",
+        "cm_set_option",
+        "cm_set_doc",
+        "cm_get_doc",
+        "cm_get_html",
+        "cm_get_state",
+        "cm_focus",
+        "cm_key",
+        "cm_mouse",
+        "cm_scroll",
+        "cm_focus_event",
+        "cm_paste",
+        "cm_input",
+        "cm_composition",
+        "cm_selected_text",
+        "cm_resize",
+        "cm_fold_click",
+        "cm_search_open",
+        "cm_search_close",
+        "cm_search_query",
+        "cm_search_next",
+        "cm_search_prev",
+        "cm_search_replace",
+        "cm_search_replace_all",
+        "cm_undo",
+        "cm_redo",
+        "cm_fold_all",
+        "cm_unfold_all",
+      ],
+    },
+  },
+)

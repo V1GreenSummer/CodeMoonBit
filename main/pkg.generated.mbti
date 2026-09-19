@@ -1,0 +1,73 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/main"
+
+import {
+  "codemoonbit/codemoonbit/ffi",
+}
+
+// Values
+pub fn cm_composition(Int, Int, @ffi.JsAny) -> Unit
+
+pub fn cm_create(@ffi.JsAny, Int) -> Unit
+
+pub fn cm_destroy(Int) -> Unit
+
+pub fn cm_focus(Int) -> Unit
+
+pub fn cm_focus_event(Int, Int) -> Unit
+
+pub fn cm_fold_all(Int) -> Unit
+
+pub fn cm_fold_click(Int, Int) -> Unit
+
+pub fn cm_get_doc(Int) -> @ffi.JsAny
+
+pub fn cm_get_html(Int) -> @ffi.JsAny
+
+pub fn cm_get_state(Int) -> @ffi.JsAny
+
+pub fn cm_input(Int, @ffi.JsAny) -> Int
+
+pub fn cm_key(Int, @ffi.JsAny, @ffi.JsAny, Int) -> Int
+
+pub fn cm_mouse(Int, Int, Double, Double, Int, Int) -> Int
+
+pub fn cm_paste(Int, @ffi.JsAny) -> Unit
+
+pub fn cm_redo(Int) -> Unit
+
+pub fn cm_resize(Int, Double, Double) -> Unit
+
+pub fn cm_scroll(Int, Double, Double) -> Unit
+
+pub fn cm_search_close(Int) -> Unit
+
+pub fn cm_search_next(Int) -> Unit
+
+pub fn cm_search_open(Int) -> Unit
+
+pub fn cm_search_prev(Int) -> Unit
+
+pub fn cm_search_query(Int, @ffi.JsAny) -> Unit
+
+pub fn cm_search_replace(Int, @ffi.JsAny) -> Unit
+
+pub fn cm_search_replace_all(Int, @ffi.JsAny) -> Unit
+
+pub fn cm_selected_text(Int) -> @ffi.JsAny
+
+pub fn cm_set_doc(Int, @ffi.JsAny) -> Unit
+
+pub fn cm_set_option(Int, @ffi.JsAny, @ffi.JsAny) -> Unit
+
+pub fn cm_undo(Int) -> Unit
+
+pub fn cm_unfold_all(Int) -> Unit
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits
