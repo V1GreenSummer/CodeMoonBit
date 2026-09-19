@@ -275,6 +275,69 @@ test "keymap matches modifiers and Mod" {
 }
 
 ///|
+test "platform mod matches meta instead of ctrl" {
+  let st = cursor_state("abc", 1)
+  let km = Keymap::new().add(key_binding(key="Mod-a", run=some(select_all_cmd)))
+  let mac : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta | mod_platform }
+  let st2 = st.apply(km.run(st, mac).unwrap())
+  assert_eq(st2.selection().main_range().anchor, 0)
+  assert_eq(st2.selection().main_range().head, 3)
+  let plain_meta : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta }
+  assert_true(km.run(st, plain_meta) is None)
+  let mac_ctrl : KeyEvent = {
+    key: "a",
+    code: "KeyA",
+    mods: mod_ctrl | mod_platform,
+  }
+  assert_true(km.run(st, mac_ctrl) is None)
+  let ctrl : KeyEvent = { key: "a", code: "KeyA", mods: mod_ctrl }
+  let st3 = st.apply(km.run(st, ctrl).unwrap())
+  assert_eq(st3.selection().main_range().head, 3)
+}
+
+///|
+test "configured indent drives indent commands" {
+  let st = @state.EditorState::create(
+    config=[indent_unit(2)],
+    doc=@core.Text::of("a\nb"),
+    selection=@core.EditorSelection::single(0, 3),
+  )
+  assert_eq(configured_indent(st), 2)
+  let st2 = st.apply(indent_more(st))
+  assert_eq(st2.to_string(), "  a\n  b")
+  let st3 = st2.apply(indent_less(st2))
+  assert_eq(st3.to_string(), "a\nb")
+  let cursor = @state.EditorState::create(
+    config=[indent_unit(2)],
+    doc=@core.Text::of("ab"),
+    selection=@core.EditorSelection::cursor(0),
+  )
+  assert_eq(cursor.apply(insert_tab(cursor)).to_string(), "  ab")
+  let fallback = cursor_state("ab", 0)
+  assert_eq(configured_indent(fallback), 4)
+  assert_eq(fallback.apply(insert_tab(fallback)).to_string(), "    ab")
+  assert_eq(fallback.apply(indent_more(fallback)).to_string(), "    ab")
+}
+
+///|
+test "default keymap forwards the configured indent" {
+  let st = @state.EditorState::create(
+    config=[indent_unit(2)],
+    doc=@core.Text::of("ab"),
+    selection=@core.EditorSelection::cursor(0),
+  )
+  let tab : KeyEvent = { key: "Tab", code: "Tab", mods: 0 }
+  let st2 = st.apply(run_keymap_facet(st, tab).unwrap())
+  assert_eq(st2.to_string(), "  ab")
+  let bracket : KeyEvent = { key: "]", code: "BracketRight", mods: mod_ctrl }
+  let st3 = st.apply(run_keymap_facet(st, bracket).unwrap())
+  assert_eq(st3.to_string(), "  ab")
+  let close : KeyEvent = { key: "[", code: "BracketLeft", mods: mod_ctrl }
+  let st4 = st3.apply(run_keymap_facet(st3, close).unwrap())
+  assert_eq(st4.to_string(), "ab")
+}
+
+///|
 test "keymap shift variant" {
   let custom : KeyBinding = {
     key: "Enter",

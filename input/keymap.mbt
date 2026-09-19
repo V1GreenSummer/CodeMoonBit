@@ -15,6 +15,12 @@ pub let mod_alt : Int = 4
 pub let mod_meta : Int = 8
 
 ///|
+/// Platform bit for `KeyEvent.mods`: when set, `Mod` bindings map to the meta
+/// key (Apple platforms) instead of ctrl. Hosts set this bit together with the
+/// actual modifier bits of the event.
+pub let mod_platform : Int = 16
+
+///|
 /// A normalized keyboard event as delivered by the DOM layer.
 pub(all) struct KeyEvent {
   key : String
@@ -128,8 +134,14 @@ fn parse_key_spec(spec : String) -> (Int, Bool, String) {
 
 ///|
 /// True when `binding_key` matches the canonical `event_spec`. `Mod` maps to
-/// ctrl, and only when meta is not held. Unlisted modifiers must not be held.
-fn key_spec_matches(binding_key : String, event_spec : String) -> Bool {
+/// ctrl, or to meta when the platform bit is set in `event_mods`, and only
+/// when the opposite modifier is not held. Unlisted modifiers must not be
+/// held.
+fn key_spec_matches(
+  binding_key : String,
+  event_spec : String,
+  event_mods : Int,
+) -> Bool {
   let (req, has_mod, base) = parse_key_spec(binding_key)
   let (ev, _, ev_base) = parse_key_spec(event_spec)
   if base != ev_base {
@@ -137,10 +149,17 @@ fn key_spec_matches(binding_key : String, event_spec : String) -> Bool {
   }
   let mut need = req
   if has_mod {
-    if (ev & mod_meta) != 0 {
-      return false
+    if (event_mods & mod_platform) != 0 {
+      if (ev & mod_meta) == 0 {
+        return false
+      }
+      need = need | mod_meta
+    } else {
+      if (ev & mod_meta) != 0 {
+        return false
+      }
+      need = need | mod_ctrl
     }
-    need = need | mod_ctrl
   }
   ev == need
 }
@@ -155,7 +174,7 @@ pub fn Keymap::run(
 ) -> @state.TransactionSpec? {
   let spec = binding_spec(event)
   for b in self.bindings {
-    if key_spec_matches(b.key, spec) {
+    if key_spec_matches(b.key, spec, event.mods) {
       match (b.run)(state) {
         Some(t) => return Some(t)
         None => ()
@@ -163,13 +182,14 @@ pub fn Keymap::run(
     }
   }
   if (event.mods & mod_shift) != 0 {
+    let plain_mods = event.mods ^ mod_shift
     let plain = binding_spec({
       key: event.key,
       code: event.code,
-      mods: event.mods ^ mod_shift,
+      mods: plain_mods,
     })
     for b in self.bindings {
-      if key_spec_matches(b.key, plain) {
+      if key_spec_matches(b.key, plain, plain_mods) {
         match (b.shift)(state) {
           Some(t) => return Some(t)
           None => ()
@@ -237,7 +257,12 @@ pub fn default_keymap() -> Array[KeyBinding] {
     key_binding(key="Mod-Backspace", run=some(delete_group_backward)),
     key_binding(key="Delete", run=some(delete_char_forward)),
     key_binding(key="Enter", run=some(insert_newline)),
-    key_binding(key="Tab", run=some(fn(state) { insert_tab(state) })),
+    key_binding(
+      key="Tab",
+      run=some(fn(state) {
+        insert_tab(state, indent_unit=state.facet(indent_unit_facet))
+      }),
+    ),
     key_binding(key="Escape", run=none_cmd),
     key_binding(key="PageUp", run=some(fn(state) { page_up(state) })),
     key_binding(key="PageDown", run=some(fn(state) { page_down(state) })),
@@ -248,8 +273,18 @@ pub fn default_keymap() -> Array[KeyBinding] {
     key_binding(key="Alt-ArrowDown", run=some(add_cursor_below)),
     key_binding(key="Mod-d", run=select_next_occurrence_cmd),
     key_binding(key="Mod-/", run=some(fn(state) { toggle_line_comment(state) })),
-    key_binding(key="Mod-]", run=some(indent_more)),
-    key_binding(key="Mod-[", run=some(indent_less)),
+    key_binding(
+      key="Mod-]",
+      run=some(fn(state) {
+        indent_more(state, indent_unit=state.facet(indent_unit_facet))
+      }),
+    ),
+    key_binding(
+      key="Mod-[",
+      run=some(fn(state) {
+        indent_less(state, indent_unit=state.facet(indent_unit_facet))
+      }),
+    ),
   ]
 }
 

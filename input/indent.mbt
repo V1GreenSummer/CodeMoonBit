@@ -1,4 +1,39 @@
 ///|
+/// The configured indentation width, defaulting to four spaces. The last
+/// configured value wins.
+pub let indent_unit_facet : @state.Facet[Int] = @state.Facet::new(
+  default=fn() { 4 },
+  combine=fn(_previous : Int, value : Int) { value },
+)
+
+///|
+/// Configures the indentation width used by Tab, `Mod-]` and `Mod-[`.
+pub fn indent_unit(n : Int) -> @state.Extension {
+  indent_unit_facet.of(n)
+}
+
+///|
+/// The indentation width configured in `state`, or four when unset.
+pub fn configured_indent(state : @state.EditorState) -> Int {
+  let value = state.facet(indent_unit_facet)
+  if value > 0 {
+    value
+  } else {
+    4
+  }
+}
+
+///|
+/// Resolves the indentation width for an editing command: an explicit
+/// `indent_unit` wins, otherwise the state's configured value is used.
+fn resolve_indent(state : @state.EditorState, indent_unit : Int?) -> Int {
+  match indent_unit {
+    Some(value) => if value > 0 { value } else { configured_indent(state) }
+    None => configured_indent(state)
+  }
+}
+
+///|
 /// The leading space/tab prefix of a line.
 pub fn leading_whitespace(line : String) -> String {
   let mut i = 0
@@ -54,8 +89,13 @@ fn touched_lines(doc : @core.Text, r : @core.SelectionRange) -> Array[Int] {
 }
 
 ///|
-/// Inserts `spaces(4)` before every line touched by the selection.
-pub fn indent_more(state : @state.EditorState) -> @state.TransactionSpec {
+/// Inserts `indent_unit` spaces before every line touched by the selection,
+/// using the configured indent when `indent_unit` is omitted.
+pub fn indent_more(
+  state : @state.EditorState,
+  indent_unit? : Int,
+) -> @state.TransactionSpec {
+  let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
   let seen : Array[Int] = []
@@ -63,7 +103,7 @@ pub fn indent_more(state : @state.EditorState) -> @state.TransactionSpec {
     for line in touched_lines(doc, r) {
       if !seen.contains(line) {
         seen.push(line)
-        changes.push(@core.Change::insert(doc.line_start(line), spaces(4)))
+        changes.push(@core.Change::insert(doc.line_start(line), spaces(unit)))
       }
     }
   }
@@ -71,8 +111,13 @@ pub fn indent_more(state : @state.EditorState) -> @state.TransactionSpec {
 }
 
 ///|
-/// Removes up to four leading whitespace units from every touched line.
-pub fn indent_less(state : @state.EditorState) -> @state.TransactionSpec {
+/// Removes up to one leading indentation unit from every touched line, using
+/// the configured indent when `indent_unit` is omitted.
+pub fn indent_less(
+  state : @state.EditorState,
+  indent_unit? : Int,
+) -> @state.TransactionSpec {
+  let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
   let seen : Array[Int] = []
@@ -85,7 +130,7 @@ pub fn indent_less(state : @state.EditorState) -> @state.TransactionSpec {
         if text.length() > 0 && text.unsafe_get(0).to_int() == 9 {
           len = 1
         } else {
-          while len < 4 &&
+          while len < unit &&
                 len < text.length() &&
                 text.unsafe_get(len).to_int() == 32 {
             len = len + 1
@@ -103,11 +148,13 @@ pub fn indent_less(state : @state.EditorState) -> @state.TransactionSpec {
 
 ///|
 /// Indents the touched lines, or inserts spaces up to the next tab stop when
-/// the cursor sits after the leading whitespace.
+/// the cursor sits after the leading whitespace. Uses the configured indent
+/// when `indent_unit` is omitted.
 pub fn insert_tab(
   state : @state.EditorState,
-  indent_unit? : Int = 4,
+  indent_unit? : Int,
 ) -> @state.TransactionSpec {
+  let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
   let seen : Array[Int] = []
@@ -116,9 +163,7 @@ pub fn insert_tab(
       for line in touched_lines(doc, r) {
         if !seen.contains(line) {
           seen.push(line)
-          changes.push(
-            @core.Change::insert(doc.line_start(line), spaces(indent_unit)),
-          )
+          changes.push(@core.Change::insert(doc.line_start(line), spaces(unit)))
         }
       }
     } else {
@@ -130,10 +175,10 @@ pub fn insert_tab(
       if col <= ws {
         if !seen.contains(line) {
           seen.push(line)
-          changes.push(@core.Change::insert(start, spaces(indent_unit)))
+          changes.push(@core.Change::insert(start, spaces(unit)))
         }
       } else {
-        let count = indent_unit - col % indent_unit
+        let count = unit - col % unit
         changes.push(@core.Change::insert(pos, spaces(count)))
       }
     }

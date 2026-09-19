@@ -265,6 +265,25 @@ pub fn cursor_char_right(state : @state.EditorState) -> @state.TransactionSpec {
 }
 
 ///|
+/// Clamps a column to the line length and snaps it left when it would fall
+/// inside a surrogate pair.
+fn snap_line_col(doc : @core.Text, line : Int, col : Int) -> Int {
+  let len = doc.line_length(line)
+  let c = if col < 0 { 0 } else if col > len { len } else { col }
+  if c <= 0 || c >= len {
+    return c
+  }
+  let s = doc.line(line)
+  let high = s.unsafe_get(c - 1).to_int()
+  let low = s.unsafe_get(c).to_int()
+  if high >= 0xD800 && high <= 0xDBFF && low >= 0xDC00 && low <= 0xDFFF {
+    c - 1
+  } else {
+    c
+  }
+}
+
+///|
 /// Moves each cursor one line up, preserving the column and clamping.
 pub fn cursor_line_up(state : @state.EditorState) -> @state.TransactionSpec {
   let doc = state.doc()
@@ -272,7 +291,11 @@ pub fn cursor_line_up(state : @state.EditorState) -> @state.TransactionSpec {
   for r in state.selection().ranges() {
     let (line, col) = doc.line_col(r.head)
     let target = if line > 0 { line - 1 } else { 0 }
-    ranges.push(@core.SelectionRange::cursor(doc.pos(target, col)))
+    ranges.push(
+      @core.SelectionRange::cursor(
+        doc.pos(target, snap_line_col(doc, target, col)),
+      ),
+    )
   }
   selection_result(state, ranges)
 }
@@ -285,7 +308,11 @@ pub fn cursor_line_down(state : @state.EditorState) -> @state.TransactionSpec {
   for r in state.selection().ranges() {
     let (line, col) = doc.line_col(r.head)
     let target = if line + 1 < doc.lines() { line + 1 } else { line }
-    ranges.push(@core.SelectionRange::cursor(doc.pos(target, col)))
+    ranges.push(
+      @core.SelectionRange::cursor(
+        doc.pos(target, snap_line_col(doc, target, col)),
+      ),
+    )
   }
   selection_result(state, ranges)
 }
@@ -412,7 +439,12 @@ pub fn select_line_up(state : @state.EditorState) -> @state.TransactionSpec {
   for r in state.selection().ranges() {
     let (line, col) = doc.line_col(r.head)
     let target = if line > 0 { line - 1 } else { 0 }
-    ranges.push(@core.SelectionRange::new(r.anchor, doc.pos(target, col)))
+    ranges.push(
+      @core.SelectionRange::new(
+        r.anchor,
+        doc.pos(target, snap_line_col(doc, target, col)),
+      ),
+    )
   }
   selection_result(state, ranges)
 }
@@ -425,7 +457,12 @@ pub fn select_line_down(state : @state.EditorState) -> @state.TransactionSpec {
   for r in state.selection().ranges() {
     let (line, col) = doc.line_col(r.head)
     let target = if line + 1 < doc.lines() { line + 1 } else { line }
-    ranges.push(@core.SelectionRange::new(r.anchor, doc.pos(target, col)))
+    ranges.push(
+      @core.SelectionRange::new(
+        r.anchor,
+        doc.pos(target, snap_line_col(doc, target, col)),
+      ),
+    )
   }
   selection_result(state, ranges)
 }

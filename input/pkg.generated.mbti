@@ -15,6 +15,8 @@ pub fn add_cursor_to_line_end(@state.EditorState) -> @state.TransactionSpec
 
 pub fn binding_spec(KeyEvent) -> String
 
+pub fn configured_indent(@state.EditorState) -> Int
+
 pub fn count_indent(String, tab_size? : Int) -> Int
 
 pub fn cursor_char_left(@state.EditorState) -> @state.TransactionSpec
@@ -47,9 +49,13 @@ pub fn delete_to_line_end(@state.EditorState) -> @state.TransactionSpec
 
 pub fn delete_to_line_start(@state.EditorState) -> @state.TransactionSpec
 
-pub fn indent_less(@state.EditorState) -> @state.TransactionSpec
+pub fn indent_less(@state.EditorState, indent_unit? : Int) -> @state.TransactionSpec
 
-pub fn indent_more(@state.EditorState) -> @state.TransactionSpec
+pub fn indent_more(@state.EditorState, indent_unit? : Int) -> @state.TransactionSpec
+
+pub fn indent_unit(Int) -> @state.Extension
+
+pub let indent_unit_facet : @state.Facet[Int]
 
 pub fn insert_newline(@state.EditorState) -> @state.TransactionSpec
 
@@ -72,6 +78,8 @@ pub let mod_alt : Int
 pub let mod_ctrl : Int
 
 pub let mod_meta : Int
+
+pub let mod_platform : Int
 
 pub let mod_shift : Int
 
