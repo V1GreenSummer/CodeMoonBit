@@ -1,0 +1,5 @@
+_build/
+target/
+*.wasm
+*.o
+.DS_Store
