@@ -19,7 +19,8 @@ measurement and event plumbing.
 - **Editing**: insert/delete, auto-indent on Enter, tab stops, line/word
   deletion, indentation, line comment toggling, multi-cursor
   (`Alt-ArrowUp/Down`, `Mod-d`), selections, word/line double/triple click.
-- **History**: grouped typing/delete undos with redo, bounded by group count.
+- **History**: grouped typing/delete undos with redo, bounded by a group
+  budget; non-history and remote edits safely invalidate stale undo steps.
 - **Syntax highlighting**: incremental, line-state based tokenizers for
   MoonBit, JavaScript, JSON and Markdown, with a per-line cache and
   invalidation on edits.
@@ -32,8 +33,11 @@ measurement and event plumbing.
   line, selections, cursors, bracket matching, optional soft wrapping,
   light/dark themes, read-only mode.
 - **Input**: extensible keymap facet with a CodeMirror-like default keymap,
-  IME composition forwarding, clipboard copy/cut/paste, mouse selection and
-  dragging, scroll forwarding.
+  platform-aware `Mod` bindings, configurable indentation, full IME
+  composition sessions (one undo per composition), clipboard
+  copy/cut/paste, mouse selection and dragging, scroll forwarding.
+- **Host API**: `onUpdate` subscriptions, structured `getSelection`, and a
+  distributable `js/codemoonbit.css` scoped to `.cm-editor`.
 
 ## Layout
 
@@ -48,17 +52,17 @@ measurement and event plumbing.
 | `view/`     | layout, geometry, rendering, mouse/scroll dispatch             |
 | `editor/`   | assembled editor: extensions, options, event entry points      |
 | `main/`     | wasm exports (`cm_*`) and the editor registry                  |
-| `js/`       | DOM runtime, Node DOM shim, e2e tests, browser loader          |
+| `js/`       | DOM runtime, stylesheet, Node DOM shim, e2e tests, loader      |
 | `demo/`     | static demo page                                               |
 
 ## Build and test
 
 ```sh
 moon check --target wasm-gc          # type check
-moon test --target wasm-gc           # 100 unit tests (pure packages)
+moon test --target wasm-gc           # 115 unit tests (pure packages)
 moon build --target wasm-gc          # _build/wasm-gc/debug/build/main/main.wasm
-node js/e2e.mjs                      # 30 end-to-end tests through a DOM shim
-node js/browser_e2e.mjs              # 32 real-browser tests (Chromium over CDP)
+node js/e2e.mjs                      # 39 end-to-end tests through a DOM shim
+node js/browser_e2e.mjs              # 48 real-browser tests (Chromium over CDP)
 moon fmt && moon info
 ```
 
@@ -70,6 +74,7 @@ python3 -m http.server 8000
 ```
 
 ```html
+<link rel="stylesheet" href="./js/codemoonbit.css" />
 <div id="editor" style="height: 400px"></div>
 <script type="module">
   import { createEditor } from "./js/browser.js";
@@ -82,6 +87,7 @@ python3 -m http.server 8000
   });
 
   editor.focus();
+  editor.onUpdate(() => console.log("document changed"));
 </script>
 ```
 
@@ -106,6 +112,10 @@ The returned handle exposes `getDoc`, `setDoc`, `getHTML`, `getState`, `focus`,
 
 - Rendering rebuilds the visible viewport HTML on each transaction instead of
   doing incremental DOM diffing.
-- Soft wrapping is approximated from measured character widths.
+- Soft wrapping splits lines into visual segments using measured character
+  widths; split points may differ from native browser wrapping for mixed
+  proportional/CJK content.
 - Shift-click selection extension is not wired (mousedown carries no modifier).
 - The regex engine used by search is a small subset, not a full regex engine.
+- The document structure is a line array with persistent unchanged strings, not
+  a rope; very large documents pay O(lines) per edit.

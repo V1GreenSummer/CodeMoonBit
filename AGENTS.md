@@ -95,14 +95,21 @@ CodeMoonBit is a CodeMirror-like code editor written in MoonBit, compiled to
 
 `JsAny` is an externref. Imports live in wasm module `"dom"`:
 `sb_new`, `sb_push`, `sb_clear`, `sb_finish`, `js_len`, `js_char`, `create`,
-`append`, `set_html`, `set_text`, `get_text`, `set_class`, `add_class`,
-`remove_class`, `set_style`, `set_attr`, `remove_attr`, `part`, `set_scroll`,
-`scroll_top`, `scroll_left`, `client_width`, `client_height`, `scroll_height`,
-`scroll_width`, `focus`, `blur`, `measure_width`, `attach`, `detach`,
-`request_measure`, `log`.
+`append`, `set_html`, `set_text`, `get_text`, `get_html`, `set_class`,
+`add_class`, `remove_class`, `set_style`, `set_attr`, `remove_attr`, `part`,
+`set_scroll`, `scroll_top`, `scroll_left`, `client_width`, `client_height`,
+`scroll_height`, `scroll_width`, `focus`, `blur`, `measure_width`, `attach`,
+`detach`, `request_measure`, `notify_update`, `log`.
 
 Helpers: `push_string`, `push_js_string`, `read_js_string`, `js_string`,
 `JsStringBuilder`, `measure_text`, `log_string`.
+
+`get_html(el)` returns the element's current `innerHTML` (used by
+`cm_get_html`). `notify_update(editor_id)` is called by the view after
+state-changing operations (non-empty changes, selection changes, `set_state`,
+`set_doc`), never from `render` or scrolling; the JS host surfaces it as
+`handle.onUpdate(callback)` in `js/browser.js` and as `onUpdate(id, callback)`
+in `js/dom_runtime.js`.
 
 The DOM part names passed to `@ffi.part(container, name)` are:
 `"scroller"`, `"content"`, `"gutter"`, `"input"`, `"measure"`.
