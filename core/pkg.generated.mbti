@@ -1,0 +1,124 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/core"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) struct Change {
+  from : Int
+  to : Int
+  text : String
+} derive(Eq)
+pub fn Change::delete(Int, Int) -> Self
+pub fn Change::delta(Self) -> Int
+pub fn Change::insert(Int, String) -> Self
+pub fn Change::is_empty(Self) -> Bool
+pub fn Change::length(Self) -> Int
+pub fn Change::new(Int, Int, String) -> Self
+pub fn Change::new_length(Self) -> Int
+
+pub(all) struct ChangeSet {
+  // private fields
+}
+pub fn ChangeSet::apply(Self, Text) -> Text
+pub fn ChangeSet::changes(Self) -> Array[Change]
+pub fn ChangeSet::delta(Self) -> Int
+pub fn ChangeSet::empty() -> Self
+pub fn ChangeSet::invert(Self, Text) -> Self
+pub fn ChangeSet::is_empty(Self) -> Bool
+pub fn ChangeSet::iter(Self) -> Iter[Change]
+pub fn ChangeSet::length(Self) -> Int
+pub fn ChangeSet::map_pos(Self, Int, Int) -> Int
+pub fn ChangeSet::map_pos_bias(Self, Int, Int) -> Int
+pub fn ChangeSet::map_range(Self, Range, Int) -> Range
+pub fn ChangeSet::of(Array[Change]) -> Self
+
+pub(all) struct EditorSelection {
+  // private fields
+}
+pub fn EditorSelection::add_range(Self, SelectionRange, main? : Bool) -> Self
+pub fn EditorSelection::create(Array[SelectionRange], Int) -> Self
+pub fn EditorSelection::cursor(Int) -> Self
+pub fn EditorSelection::eq(Self, Self) -> Bool
+pub fn EditorSelection::is_cursor(Self) -> Bool
+pub fn EditorSelection::main_index(Self) -> Int
+pub fn EditorSelection::main_range(Self) -> SelectionRange
+pub fn EditorSelection::map(Self, ChangeSet, assoc? : Int) -> Self
+pub fn EditorSelection::normalized(Self) -> Self
+pub fn EditorSelection::range_count(Self) -> Int
+pub fn EditorSelection::ranges(Self) -> Array[SelectionRange]
+pub fn EditorSelection::set_main_index(Self, Int) -> Self
+pub fn EditorSelection::single(Int, Int) -> Self
+
+pub(all) struct Range {
+  from : Int
+  to : Int
+} derive(Eq, Hash)
+pub fn Range::contains(Self, Int) -> Bool
+pub fn Range::contains_range(Self, Self) -> Bool
+pub fn Range::empty(Int) -> Self
+pub fn Range::eq(Self, Self) -> Bool
+pub fn Range::is_empty(Self) -> Bool
+pub fn Range::length(Self) -> Int
+pub fn Range::map(Self, ChangeSet, assoc? : Int) -> Self
+pub fn Range::new(Int, Int) -> Self
+pub fn Range::overlaps(Self, Self) -> Bool
+pub fn Range::touches(Self, Self) -> Bool
+
+pub(all) struct RangeSet {
+  // private fields
+}
+pub fn RangeSet::between(Self, Int, Int) -> Array[Range]
+pub fn RangeSet::contains(Self, Int) -> Bool
+pub fn RangeSet::empty() -> Self
+pub fn RangeSet::iter(Self) -> Iter[Range]
+pub fn RangeSet::map(Self, ChangeSet) -> Self
+pub fn RangeSet::of(Array[Range]) -> Self
+pub fn RangeSet::ranges(Self) -> Array[Range]
+pub fn RangeSet::size(Self) -> Int
+pub fn RangeSet::update(Self, Array[Range], (Range) -> Bool) -> Self
+
+pub(all) struct SelectionRange {
+  anchor : Int
+  head : Int
+} derive(Eq, Hash)
+pub fn SelectionRange::as_range(Self) -> Range
+pub fn SelectionRange::cursor(Int) -> Self
+pub fn SelectionRange::eq(Self, Self) -> Bool
+pub fn SelectionRange::from(Self) -> Int
+pub fn SelectionRange::head_pos(Self) -> Int
+pub fn SelectionRange::is_empty(Self) -> Bool
+pub fn SelectionRange::length(Self) -> Int
+pub fn SelectionRange::new(Int, Int) -> Self
+pub fn SelectionRange::to(Self) -> Int
+
+pub(all) struct Text {
+  // private fields
+}
+pub fn Text::append(Self, Self) -> Self
+pub fn Text::clip_pos(Self, Int) -> Int
+pub fn Text::empty() -> Self
+pub fn Text::eq(Self, Self) -> Bool
+pub fn Text::is_empty(Self) -> Bool
+pub fn Text::iter_lines(Self) -> Iter[String]
+pub fn Text::length(Self) -> Int
+pub fn Text::line(Self, Int) -> String
+pub fn Text::line_at(Self, Int) -> Int
+pub fn Text::line_col(Self, Int) -> (Int, Int)
+pub fn Text::line_end(Self, Int) -> Int
+pub fn Text::line_length(Self, Int) -> Int
+pub fn Text::line_slice(Self, Int, Int, Int) -> String
+pub fn Text::line_start(Self, Int) -> Int
+pub fn Text::lines(Self) -> Int
+pub fn Text::of(String) -> Self
+pub fn Text::pos(Self, Int, Int) -> Int
+pub fn Text::replace(Self, Int, Int, String) -> Self
+pub fn Text::slice(Self, Int, Int) -> String
+pub fn Text::substring(Self, Int, Int) -> String
+pub fn Text::to_string(Self) -> String
+
+// Type aliases
+
+// Traits
