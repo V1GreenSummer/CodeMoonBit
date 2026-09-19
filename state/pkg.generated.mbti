@@ -10,6 +10,8 @@ pub fn fresh_state_id() -> Int
 
 pub let history_field : StateField[HistoryState]
 
+pub let history_max_groups : Int
+
 pub fn redo_spec(EditorState) -> TransactionSpec?
 
 pub fn undo_spec(EditorState) -> TransactionSpec?

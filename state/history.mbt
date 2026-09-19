@@ -70,6 +70,27 @@ fn diff_changes(from : @core.Text, to : @core.Text) -> @core.ChangeSet {
 }
 
 ///|
+/// Maximum number of history groups retained. Once exceeded, the oldest
+/// groups are dropped so undo history memory stays bounded.
+pub let history_max_groups : Int = 200
+
+///|
+/// Appends a group to the done stack, trimming the oldest groups when the
+/// budget is exceeded.
+fn push_group(
+  done : Array[HistoryGroup],
+  group : HistoryGroup,
+) -> Array[HistoryGroup] {
+  let result = done + [group]
+  let excess = result.length() - history_max_groups
+  if excess > 0 {
+    result[excess:result.length()].to_owned()
+  } else {
+    result
+  }
+}
+
+///|
 pub let history_field : StateField[HistoryState] = StateField::new(
   init=fn(_) { HistoryState::empty() },
   update=fn(old, tr) {
@@ -90,17 +111,19 @@ pub let history_field : StateField[HistoryState] = StateField::new(
         }
         let group = old.undone[old.undone.length() - 1]
         return {
-          done: old.done + [group],
+          done: push_group(old.done, group),
           undone: old.undone[0:old.undone.length() - 1].to_owned(),
         }
       }
       _ => ()
     }
-    if !tr.add_to_history() {
-      return old
-    }
     if tr.changes().is_empty() {
       return old
+    }
+    // A non-history document change cannot be rebased against stale snapshot
+    // diffs, so drop all existing groups instead of corrupting undo.
+    if tr.is_remote() || !tr.add_to_history() {
+      return { done: [], undone: [] }
     }
     let event = match tr.user_event() {
       Some(e) => e
@@ -130,7 +153,7 @@ pub let history_field : StateField[HistoryState] = StateField::new(
         return { done, undone: [] }
       }
     }
-    { done: old.done + [group], undone: [] }
+    { done: push_group(old.done, group), undone: [] }
   },
 )
 

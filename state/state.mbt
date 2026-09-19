@@ -39,18 +39,25 @@ pub fn EditorState::create(
       facet_slots.push((id, finalize()))
     }
   }
-  let provisional : EditorState = {
-    doc: text,
-    selection: sel,
-    fields: [],
-    field_slots: [],
-    facet_slots,
-    extensions,
-  }
   let fields = extensions.fields()
   let field_slots : Array[() -> Unit] = []
-  for f in fields {
-    field_slots.push((f.init_slot)(provisional))
+  for _ in fields {
+    field_slots.push(fn() {
+      abort(
+        "state field dependency is not initialized yet (cyclic state field dependency)",
+      )
+    })
+  }
+  for i = 0; i < fields.length(); i = i + 1 {
+    let partial : EditorState = {
+      doc: text,
+      selection: sel,
+      fields,
+      field_slots,
+      facet_slots,
+      extensions,
+    }
+    field_slots[i] = (fields[i].init_slot)(partial)
   }
   { doc: text, selection: sel, fields, field_slots, facet_slots, extensions }
 }
@@ -177,6 +184,7 @@ pub fn EditorState::update(
       None => false
     },
     computed: None,
+    cached_new_doc: None,
   }
 }
 

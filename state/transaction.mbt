@@ -68,6 +68,7 @@ pub struct Transaction {
   priv annotations : Array[Annotation]
   priv scroll_into_view : Bool
   priv mut computed : EditorState?
+  priv mut cached_new_doc : @core.Text?
 }
 
 ///|
@@ -87,7 +88,14 @@ pub fn Transaction::selection(self : Transaction) -> @core.EditorSelection {
 
 ///|
 pub fn Transaction::new_doc(self : Transaction) -> @core.Text {
-  self.changes.apply(self.start.doc())
+  match self.cached_new_doc {
+    Some(doc) => doc
+    None => {
+      let doc = self.changes.apply(self.start.doc())
+      self.cached_new_doc = Some(doc)
+      doc
+    }
+  }
 }
 
 ///|
@@ -195,7 +203,7 @@ pub fn Transaction::state(self : Transaction) -> EditorState {
     None => {
       let new_state = EditorState::after_transaction(
         self.start,
-        self.changes.apply(self.start.doc()),
+        self.new_doc(),
         self.selection,
         self,
       )
