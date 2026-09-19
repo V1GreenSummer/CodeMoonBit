@@ -1,0 +1,67 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/highlight"
+
+import {
+  "codemoonbit/codemoonbit/core",
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn javascript_language() -> Language
+
+pub fn json_language() -> Language
+
+pub fn language_by_name(String) -> Language
+
+pub fn markdown_language() -> Language
+
+pub fn moonbit_language() -> Language
+
+pub fn plain_language() -> Language
+
+// Errors
+
+// Types and methods
+pub struct HighlightCache {
+  // private fields
+}
+pub fn HighlightCache::invalidate(Self, Int) -> Unit
+pub fn HighlightCache::new(Language) -> Self
+pub fn HighlightCache::tokens_for_line(Self, @core.Text, Int) -> Array[Token]
+
+pub struct Language {
+  // private fields
+}
+pub fn Language::block_comment(Self) -> (String, String)?
+pub fn Language::brackets(Self) -> Array[(String, String)]
+pub fn Language::indent(Self, String, Int, Int) -> Int
+pub fn Language::line_comment(Self) -> String?
+pub fn Language::name(Self) -> String
+pub fn Language::tokenize(Self, String, Int) -> (Array[Token], Int)
+
+pub struct Token {
+  from : Int
+  to : Int
+  typ : TokenType
+} derive(Eq, @debug.Debug)
+
+pub enum TokenType {
+  Keyword
+  TypeName
+  VariableName
+  PropertyName
+  Atom
+  Number
+  String
+  Comment
+  Operator
+  Punctuation
+  Meta
+  Tag
+  Attribute
+  Invalid
+} derive(Eq, Hash, @debug.Debug)
+
+// Type aliases
+
+// Traits
