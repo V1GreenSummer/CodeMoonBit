@@ -1,0 +1,101 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/ffi"
+
+// Values
+pub fn add_class(JsAny, JsAny) -> Unit
+
+pub fn append(JsAny, JsAny) -> Unit
+
+pub fn attach(JsAny, Int) -> Unit
+
+pub fn blur(JsAny) -> Unit
+
+pub fn client_height(JsAny) -> Double
+
+pub fn client_width(JsAny) -> Double
+
+pub fn create(JsAny) -> JsAny
+
+pub fn detach(JsAny) -> Unit
+
+pub fn focus(JsAny) -> Unit
+
+pub fn get_html(JsAny) -> JsAny
+
+pub fn get_text(JsAny) -> JsAny
+
+pub fn js_char(JsAny, Int) -> Int
+
+pub fn js_len(JsAny) -> Int
+
+pub fn js_string(String) -> JsAny
+
+pub fn log(JsAny) -> Unit
+
+pub fn log_string(String) -> Unit
+
+pub fn measure_text(String, String) -> Double
+
+pub fn measure_width(JsAny, JsAny) -> Double
+
+pub fn part(JsAny, JsAny) -> JsAny
+
+pub fn push_js_string(Int, JsAny) -> Unit
+
+pub fn push_string(Int, String) -> Unit
+
+pub fn read_js_string(JsAny) -> String
+
+pub fn remove_attr(JsAny, JsAny) -> Unit
+
+pub fn remove_class(JsAny, JsAny) -> Unit
+
+pub fn request_measure(Int) -> Unit
+
+pub fn sb_clear(Int) -> Unit
+
+pub fn sb_finish(Int) -> JsAny
+
+pub fn sb_new() -> Int
+
+pub fn sb_push(Int, Int) -> Unit
+
+pub fn scroll_height(JsAny) -> Double
+
+pub fn scroll_left(JsAny) -> Double
+
+pub fn scroll_top(JsAny) -> Double
+
+pub fn scroll_width(JsAny) -> Double
+
+pub fn set_attr(JsAny, JsAny, JsAny) -> Unit
+
+pub fn set_class(JsAny, JsAny) -> Unit
+
+pub fn set_html(JsAny, JsAny) -> Unit
+
+pub fn set_scroll(JsAny, Double, Double) -> Unit
+
+pub fn set_style(JsAny, JsAny, JsAny) -> Unit
+
+pub fn set_text(JsAny, JsAny) -> Unit
+
+// Errors
+
+// Types and methods
+#external
+pub type JsAny
+
+pub struct JsStringBuilder {
+  // private fields
+}
+pub fn JsStringBuilder::clear(Self) -> Unit
+pub fn JsStringBuilder::finish(Self) -> JsAny
+pub fn JsStringBuilder::new() -> Self
+pub fn JsStringBuilder::push(Self, String) -> Unit
+pub fn JsStringBuilder::push_char(Self, Char) -> Unit
+pub fn JsStringBuilder::push_code(Self, Int) -> Unit
+
+// Type aliases
+
+// Traits
