@@ -50,6 +50,33 @@ pub fn cm_get_html(id : Int) -> @ffi.JsAny {
 }
 
 ///|
+pub fn cm_get_selection(id : Int) -> @ffi.JsAny {
+  match registry.get(id) {
+    Some(editor) => {
+      let selection = editor.state().selection()
+      let sb = @ffi.JsStringBuilder::new()
+      sb.push("{\"main\":")
+      sb.push(selection.main_index().to_string())
+      sb.push(",\"ranges\":[")
+      let ranges = selection.ranges()
+      for i = 0; i < ranges.length(); i = i + 1 {
+        if i > 0 {
+          sb.push(",")
+        }
+        sb.push("{\"anchor\":")
+        sb.push(ranges[i].anchor.to_string())
+        sb.push(",\"head\":")
+        sb.push(ranges[i].head.to_string())
+        sb.push("}")
+      }
+      sb.push("]}")
+      sb.finish()
+    }
+    None => @ffi.js_string("")
+  }
+}
+
+///|
 pub fn cm_get_state(id : Int) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => {

@@ -21,6 +21,7 @@ options(
         "cm_set_doc",
         "cm_get_doc",
         "cm_get_html",
+        "cm_get_selection",
         "cm_get_state",
         "cm_focus",
         "cm_key",

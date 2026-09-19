@@ -24,6 +24,8 @@ pub fn cm_get_doc(Int) -> @ffi.JsAny
 
 pub fn cm_get_html(Int) -> @ffi.JsAny
 
+pub fn cm_get_selection(Int) -> @ffi.JsAny
+
 pub fn cm_get_state(Int) -> @ffi.JsAny
 
 pub fn cm_input(Int, @ffi.JsAny) -> Int
