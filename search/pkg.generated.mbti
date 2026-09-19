@@ -19,6 +19,8 @@ pub fn fold_at(@state.EditorState, Array[(String, String)]) -> @state.Transactio
 
 pub let fold_field : @state.StateField[FoldState]
 
+pub fn fold_line(@state.EditorState, Int, Array[(String, String)]) -> @state.TransactionSpec?
+
 pub fn is_line_hidden(@state.EditorState, Int) -> Bool
 
 pub fn is_search_open(@state.EditorState) -> Bool
@@ -56,6 +58,8 @@ pub let set_replace_effect : @state.StateEffect[String]
 pub fn unfold_all(@state.EditorState) -> @state.TransactionSpec?
 
 pub fn unfold_at(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn unfold_line(@state.EditorState, Int) -> @state.TransactionSpec?
 
 // Errors
 

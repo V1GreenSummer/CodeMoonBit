@@ -204,16 +204,17 @@ pub fn replace_all(
   match search_state(state) {
     None => None
     Some(search) => {
-      if search.matches.length() == 0 {
+      let matches = find_matches(state.doc(), search.query, limit=0)
+      if matches.length() == 0 {
         return None
       }
       let changes : Array[@core.Change] = []
-      for range in search.matches {
+      for range in matches {
         changes.push(@core.Change::new(range.from, range.to, replacement))
       }
       let change_set = @core.ChangeSet::of(changes)
-      let first = search.matches[0]
-      let last = search.matches[search.matches.length() - 1]
+      let first = matches[0]
+      let last = matches[matches.length() - 1]
       let selection = @core.EditorSelection::single(
         change_set.map_pos(first.from, -1),
         change_set.map_pos(last.to, 1),
@@ -223,6 +224,7 @@ pub fn replace_all(
           changes=change_set,
           selection~,
           effects=[set_replace_effect.of(replacement)],
+          annotations=[@state.UserEvent("replace")],
           scroll_into_view=true,
         ),
       )

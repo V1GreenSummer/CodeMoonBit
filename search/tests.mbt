@@ -305,6 +305,26 @@ test "replace transactions are undoable" {
 }
 
 ///|
+test "replace all scans past the display limit" {
+  let original = "a ".repeat(1001)
+  let doc = @core.Text::of(original)
+  let st0 = @state.EditorState::create(
+    config=[search_field.extension(), @state.history_field.extension()],
+    doc~,
+  )
+  let st1 = st0.apply(open_search())
+  let st2 = st1.apply(set_query(st1, SearchQuery::new(text="a")))
+  assert_eq(st2.field(search_field).matches.length(), 1000)
+  let st3 = st2.apply(replace_all(st2, "b").unwrap())
+  assert_eq(st3.doc().to_string(), "b ".repeat(1001))
+  let done = st3.field(@state.history_field).done
+  assert_eq(done.length(), 1)
+  assert_eq(done[0].event, "replace")
+  let st4 = st3.apply(@state.undo_spec(st3).unwrap())
+  assert_eq(st4.doc().to_string(), original)
+}
+
+///|
 test "replace commands are no-ops without matches" {
   let doc = @core.Text::of("abc")
   let st0 = @state.EditorState::create(config=[search_field.extension()], doc~)
@@ -425,6 +445,68 @@ test "fold field update replaces folds" {
     @state.TransactionSpec::new(effects=[set_folds_effect.of([])]),
   )
   assert_eq(st2.field(fold_field).folded.length(), 0)
+}
+
+///|
+test "fold ranges map through document edits" {
+  let doc = @core.Text::of("fn main() {\n  a;\n  b;\n}\n")
+  let brackets = [("{", "}")]
+  let st0 = @state.EditorState::create(config=[fold_field.extension()], doc~)
+  let st1 = st0.apply(fold_at(st0, brackets).unwrap())
+  assert_true(is_line_hidden(st1, 1))
+  assert_true(is_line_hidden(st1, 3))
+  let before = st1.doc().slice(st1.doc().line_start(1), st1.doc().line_end(3))
+  let st2 = st1.apply(
+    @state.TransactionSpec::new(
+      changes=@core.ChangeSet::of([@core.Change::insert(0, "\n")]),
+    ),
+  )
+  let folds = st2.field(fold_field).folded
+  assert_eq(folds.length(), 1)
+  assert_eq(folds[0].from_line, 1)
+  assert_eq(folds[0].to_line, 4)
+  assert_false(is_line_hidden(st2, 1))
+  assert_true(is_line_hidden(st2, 2))
+  assert_true(is_line_hidden(st2, 4))
+  let after = st2.doc().slice(st2.doc().line_start(2), st2.doc().line_end(4))
+  assert_eq(after, before)
+}
+
+///|
+test "fold line ignores the cursor" {
+  let doc = @core.Text::of("fn main() {\n  a;\n  b;\n}\n")
+  let brackets = [("{", "}")]
+  let st0 = @state.EditorState::create(
+    config=[fold_field.extension()],
+    doc~,
+    selection=@core.EditorSelection::cursor(doc.length()),
+  )
+  let st1 = st0.apply(fold_line(st0, 0, brackets).unwrap())
+  assert_true(is_line_hidden(st1, 1))
+  assert_true(is_line_hidden(st1, 3))
+  assert_eq(st1.selection().main_range().head_pos(), doc.length())
+  let st2 = st0.apply(fold_line(st0, 2, brackets).unwrap())
+  assert_true(is_line_hidden(st2, 3))
+  assert_eq(st2.selection().main_range().head_pos(), doc.length())
+}
+
+///|
+test "unfold line ignores the cursor" {
+  let doc = @core.Text::of("fn main() {\n  a;\n  b;\n}\n")
+  let brackets = [("{", "}")]
+  let st0 = @state.EditorState::create(
+    config=[fold_field.extension()],
+    doc~,
+    selection=@core.EditorSelection::cursor(doc.length()),
+  )
+  let st1 = st0.apply(fold_line(st0, 0, brackets).unwrap())
+  assert_true(is_line_hidden(st1, 1))
+  assert_true(is_line_hidden(st1, 3))
+  let st2 = st1.apply(unfold_line(st1, 0).unwrap())
+  assert_false(is_line_hidden(st2, 1))
+  assert_false(is_line_hidden(st2, 3))
+  assert_eq(st2.selection().main_range().head_pos(), doc.length())
+  assert_true(unfold_line(st2, 0) is None)
 }
 
 ///|

@@ -27,10 +27,54 @@ pub let fold_field : @state.StateField[FoldState] = @state.StateField::new(
   update=fn(old, tr) {
     match tr.effect(set_folds_effect) {
       Some(folds) => { folded: folds }
-      None => old
+      None =>
+        {
+          folded: map_folds(
+            tr.start_state().doc(),
+            tr.new_doc(),
+            tr.changes(),
+            old.folded,
+          ),
+        }
     }
   },
 )
+
+///|
+/// Maps folded line ranges through a change set so folds survive edits.
+/// Drops folds whose mapped range collapses to fewer than two lines.
+fn map_folds(
+  old_doc : @core.Text,
+  new_doc : @core.Text,
+  changes : @core.ChangeSet,
+  folds : Array[FoldRange],
+) -> Array[FoldRange] {
+  if changes.is_empty() {
+    return folds
+  }
+  let old_lines = old_doc.lines()
+  let result : Array[FoldRange] = []
+  for fold in folds {
+    if fold.from_line < 0 ||
+      fold.from_line >= old_lines ||
+      fold.to_line < 0 ||
+      fold.to_line >= old_lines {
+      continue
+    }
+    let from_pos = new_doc.clip_pos(
+      changes.map_pos(old_doc.line_start(fold.from_line), 1),
+    )
+    let to_pos = new_doc.clip_pos(
+      changes.map_pos(old_doc.line_end(fold.to_line), -1),
+    )
+    let from_line = new_doc.line_at(from_pos)
+    let to_line = new_doc.line_at(to_pos)
+    if from_line < to_line {
+      result.push({ from_line, to_line })
+    }
+  }
+  normalize_folds(result)
+}
 
 ///|
 /// Sorts and prunes a list of folds so that the result is sorted and
@@ -236,6 +280,49 @@ pub fn fold_at(
 }
 
 ///|
+/// Folds the block starting at `line`, or the innermost block enclosing it,
+/// without relying on the cursor position.
+pub fn fold_line(
+  state : @state.EditorState,
+  line : Int,
+  brackets : Array[(String, String)],
+) -> @state.TransactionSpec? {
+  match fold_state(state) {
+    None => None
+    Some(fold) => {
+      let mut exact : FoldRange? = None
+      let mut enclosing : FoldRange? = None
+      for candidate in compute_folds(state.doc(), brackets, None) {
+        if contains_fold(fold.folded, candidate) {
+          continue
+        }
+        if candidate.from_line == line {
+          exact = Some(candidate)
+          break
+        }
+        if candidate.from_line < line && line <= candidate.to_line {
+          match enclosing {
+            Some(prev) =>
+              if candidate.from_line > prev.from_line {
+                enclosing = Some(candidate)
+              }
+            None => enclosing = Some(candidate)
+          }
+        }
+      }
+      match exact {
+        Some(candidate) => Some(fold_spec(fold.folded + [candidate]))
+        None =>
+          match enclosing {
+            Some(candidate) => Some(fold_spec(fold.folded + [candidate]))
+            None => None
+          }
+      }
+    }
+  }
+}
+
+///|
 fn contains_fold(folds : Array[FoldRange], fold : FoldRange) -> Bool {
   for existing in folds {
     if existing.from_line == fold.from_line && existing.to_line == fold.to_line {
@@ -257,6 +344,33 @@ pub fn unfold_at(state : @state.EditorState) -> @state.TransactionSpec? {
       for existing in fold.folded {
         if existing.from_line == line ||
           (line > existing.from_line && line <= existing.to_line) {
+          removed = true
+        } else {
+          remaining.push(existing)
+        }
+      }
+      if !removed {
+        None
+      } else {
+        Some(fold_spec(remaining))
+      }
+    }
+  }
+}
+
+///|
+/// Removes the fold starting at `line`, regardless of the cursor position.
+pub fn unfold_line(
+  state : @state.EditorState,
+  line : Int,
+) -> @state.TransactionSpec? {
+  match fold_state(state) {
+    None => None
+    Some(fold) => {
+      let remaining : Array[FoldRange] = []
+      let mut removed = false
+      for existing in fold.folded {
+        if existing.from_line == line {
           removed = true
         } else {
           remaining.push(existing)
