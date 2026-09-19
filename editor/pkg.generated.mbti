@@ -1,0 +1,54 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/editor"
+
+import {
+  "codemoonbit/codemoonbit/ffi",
+  "codemoonbit/codemoonbit/input",
+  "codemoonbit/codemoonbit/state",
+  "codemoonbit/codemoonbit/view",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub struct Editor {
+  // private fields
+}
+pub fn Editor::apply(Self, @state.TransactionSpec) -> Bool
+pub fn Editor::close_search(Self) -> Unit
+pub fn Editor::create(@ffi.JsAny, Int) -> Self
+pub fn Editor::destroy(Self) -> Unit
+pub fn Editor::dispatch_composition(Self, Int, @ffi.JsAny) -> Unit
+pub fn Editor::dispatch_focus(Self, Int) -> Unit
+pub fn Editor::dispatch_input(Self, @ffi.JsAny) -> Bool
+pub fn Editor::dispatch_key(Self, @input.KeyEvent) -> Bool
+pub fn Editor::dispatch_mouse(Self, Int, Double, Double, Int) -> Bool
+pub fn Editor::dispatch_paste(Self, @ffi.JsAny) -> Unit
+pub fn Editor::dispatch_scroll(Self, Double, Double) -> Unit
+pub fn Editor::doc_string(Self) -> String
+pub fn Editor::focus(Self) -> Unit
+pub fn Editor::fold_all(Self) -> Unit
+pub fn Editor::id(Self) -> Int
+pub fn Editor::open_search(Self) -> Unit
+pub fn Editor::options(Self) -> @view.ViewOptions
+pub fn Editor::redo(Self) -> Unit
+pub fn Editor::rendered_html(Self) -> String
+pub fn Editor::replace_all(Self, String) -> Unit
+pub fn Editor::search_next(Self) -> Unit
+pub fn Editor::search_prev(Self) -> Unit
+pub fn Editor::search_replace(Self, String) -> Unit
+pub fn Editor::selected_text(Self) -> @ffi.JsAny
+pub fn Editor::set_doc(Self, String) -> Unit
+pub fn Editor::set_option(Self, String, String) -> Unit
+pub fn Editor::set_search_query(Self, String) -> Unit
+pub fn Editor::state(Self) -> @state.EditorState
+pub fn Editor::toggle_fold(Self, Int) -> Unit
+pub fn Editor::undo(Self) -> Unit
+pub fn Editor::unfold_all(Self) -> Unit
+pub fn Editor::view(Self) -> @view.EditorView
+
+// Type aliases
+
+// Traits

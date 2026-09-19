@@ -1,0 +1,11 @@
+import {
+  "codemoonbit/codemoonbit/core",
+  "codemoonbit/codemoonbit/state",
+  "codemoonbit/codemoonbit/highlight",
+  "codemoonbit/codemoonbit/search",
+  "codemoonbit/codemoonbit/input",
+  "codemoonbit/codemoonbit/view",
+  "codemoonbit/codemoonbit/ffi",
+}
+
+supported_targets = "wasm-gc"
