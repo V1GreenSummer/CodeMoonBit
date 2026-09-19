@@ -4,6 +4,9 @@ pub struct Editor {
   priv view : @view.EditorView
   priv id : Int
   priv mut options : @view.ViewOptions
+  priv mut comp_active : Bool
+  priv mut comp_from : Int?
+  priv mut comp_text : String
 }
 
 ///|
@@ -55,7 +58,14 @@ pub fn Editor::create(container : @ffi.JsAny, id : Int) -> Editor {
     selection=@core.EditorSelection::cursor(0),
   )
   let view = @view.EditorView::new(container, id, state, options)
-  let editor : Editor = { view, id, options }
+  let editor : Editor = {
+    view,
+    id,
+    options,
+    comp_active: false,
+    comp_from: None,
+    comp_text: "",
+  }
   view.set_decorations_provider(fn(s) { editor.decorations(s) })
   view.set_line_filter(fn(s, line) { is_line_visible(s, line) })
   editor
@@ -148,7 +158,16 @@ pub fn Editor::destroy(self : Editor) -> Unit {
 }
 
 ///|
+/// Clears any in-progress IME composition session.
+fn Editor::reset_composition(self : Editor) -> Unit {
+  self.comp_active = false
+  self.comp_from = None
+  self.comp_text = ""
+}
+
+///|
 pub fn Editor::set_doc(self : Editor, text : String) -> Unit {
+  self.reset_composition()
   self.view.set_doc(text)
 }
 
@@ -175,6 +194,7 @@ pub fn Editor::set_option(self : Editor, key : String, value : String) -> Unit {
     line_height: old.line_height,
     language_name: old.language_name,
   }
+  let mut indent_changed = false
   match key {
     "lineNumbers" =>
       opts = @view.ViewOptions::with_line_numbers(old, parse_bool(value))
@@ -182,8 +202,10 @@ pub fn Editor::set_option(self : Editor, key : String, value : String) -> Unit {
       opts = @view.ViewOptions::with_line_wrapping(old, parse_bool(value))
     "readOnly" =>
       opts = @view.ViewOptions::with_read_only(old, parse_bool(value))
-    "tabSize" =>
+    "tabSize" => {
       opts = @view.ViewOptions::with_tab_size(old, parse_int(value, 4).max(1))
+      indent_changed = true
+    }
     "language" => opts = @view.ViewOptions::with_language_name(old, value)
     "theme" => opts = @view.ViewOptions::with_theme(old, value)
     "font" => opts = @view.ViewOptions::with_font(old, value)
@@ -202,6 +224,19 @@ pub fn Editor::set_option(self : Editor, key : String, value : String) -> Unit {
   }
   self.options = opts
   self.view.set_options(opts)
+  if indent_changed {
+    let state = @state.EditorState::create(
+      config=default_extensions() + [@input.indent_unit(opts.tab_size)],
+      doc=self.state().doc(),
+      selection=self.state().selection(),
+    )
+    self.view.set_state(state)
+    @ffi.set_style(
+      self.view.content_element(),
+      @ffi.js_string("tabSize"),
+      @ffi.js_string(opts.tab_size.to_string()),
+    )
+  }
 }
 
 ///|
@@ -340,7 +375,7 @@ pub fn Editor::dispatch_paste(self : Editor, text : @ffi.JsAny) -> Unit {
 
 ///|
 pub fn Editor::dispatch_input(self : Editor, text : @ffi.JsAny) -> Bool {
-  if self.options.read_only {
+  if self.options.read_only || self.comp_active {
     return false
   }
   let spec = @input.insert_text(self.state(), @ffi.read_js_string(text))
@@ -350,6 +385,28 @@ pub fn Editor::dispatch_input(self : Editor, text : @ffi.JsAny) -> Bool {
 }
 
 ///|
+/// Applies one composition edit as an ordinary history-tracked `input.type`
+/// change so consecutive updates merge into a single undo group.
+fn Editor::apply_composition_change(
+  self : Editor,
+  from : Int,
+  to : Int,
+  text : String,
+) -> Unit {
+  let spec = @state.TransactionSpec::new(
+    changes=@core.ChangeSet::of([@core.Change::new(from, to, text)]),
+    annotations=[@state.UserEvent("input.type")],
+    scroll_into_view=true,
+  )
+  let _ = self.view.apply_spec(spec)
+  self.view.ensure_cursor_visible_public()
+}
+
+///|
+/// Runs an IME composition session. Phase 0 starts, phase 1 updates the
+/// provisional text and phase 2 commits the final text; every phase mutates
+/// the document through the normal history path so one undo removes the whole
+/// composition. Surrounding text is never touched.
 pub fn Editor::dispatch_composition(
   self : Editor,
   phase : Int,
@@ -361,19 +418,54 @@ pub fn Editor::dispatch_composition(
   let value = @ffi.read_js_string(text)
   match phase {
     0 => {
-      let pos = self.state().selection().main_range().head
-      let spec = @state.TransactionSpec::new(
-        changes=@core.ChangeSet::of([@core.Change::insert(pos, value)]),
-        annotations=[
-          @state.AddToHistory(false),
-          @state.UserEvent("input.type"),
-          @state.ScrollIntoView(true),
-        ],
-      )
-      let _ = self.view.apply_spec(spec)
+      self.comp_active = true
+      self.comp_from = None
+      self.comp_text = ""
     }
-    1 => ()
-    _ => ()
+    1 => {
+      if !self.comp_active {
+        self.comp_active = true
+        self.comp_from = None
+        self.comp_text = ""
+      }
+      match self.comp_from {
+        Some(from) => {
+          self.apply_composition_change(
+            from,
+            from + self.comp_text.length(),
+            value,
+          )
+          self.comp_text = value
+        }
+        None =>
+          if value.length() > 0 {
+            let range = self.state().selection().main_range()
+            self.apply_composition_change(range.from(), range.to(), value)
+            self.comp_from = Some(range.from())
+            self.comp_text = value
+          }
+      }
+    }
+    _ => {
+      let from = self.comp_from
+      match from {
+        Some(start) =>
+          if self.comp_text != value {
+            self.apply_composition_change(
+              start,
+              start + self.comp_text.length(),
+              value,
+            )
+          }
+        None =>
+          if value.length() > 0 {
+            let spec = @input.insert_text(self.state(), value)
+            let _ = self.view.apply_spec(spec)
+            self.view.ensure_cursor_visible_public()
+          }
+      }
+      self.reset_composition()
+    }
   }
 }
 
@@ -444,31 +536,19 @@ pub fn Editor::toggle_fold(self : Editor, line : Int) -> Unit {
   if !state.has_field(@search.fold_field.id()) {
     return
   }
-  let folds = state.field(@search.fold_field)
-  for f in folds.folded {
-    if f.from_line == line {
-      match @search.unfold_at(state) {
+  match @search.unfold_line(state, line) {
+    Some(spec) => {
+      let _ = self.view.apply_spec(spec)
+    }
+    None => {
+      let brackets = language_of(self.options).brackets()
+      match @search.fold_line(state, line, brackets) {
         Some(spec) => {
           let _ = self.view.apply_spec(spec)
         }
         None => ()
       }
-      return
     }
-  }
-  let doc = state.doc()
-  let sel = @core.EditorSelection::cursor(doc.line_start(line))
-  let with_cursor = @state.TransactionSpec::new(
-    changes=@core.ChangeSet::empty(),
-    selection=sel,
-  )
-  let _ = self.view.apply_spec(with_cursor)
-  let brackets = language_of(self.options).brackets()
-  match @search.fold_at(self.state(), brackets) {
-    Some(spec) => {
-      let _ = self.view.apply_spec(spec)
-    }
-    None => ()
   }
 }
 
