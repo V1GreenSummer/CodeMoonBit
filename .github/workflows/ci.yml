@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MoonBit
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+
+      - name: Show toolchain version
+        run: moon version
+
+      # The MoonBit formatter and .mbti generator are version sensitive, and
+      # the toolchain installer only serves the latest stable build. These two
+      # steps therefore report drift instead of failing the build; pin the
+      # toolchain locally to the same release when reproducing the checks.
+      - name: Format check (advisory)
+        run: moon fmt --check || echo "::warning title=MoonBit format drift::moon fmt differs with this toolchain version"
+
+      - name: Interface check (advisory)
+        run: |
+          moon info
+          git diff --exit-code || echo "::warning title=MoonBit interface drift::moon info changed the generated interfaces with this toolchain version"
+
+      - name: Type check
+        run: moon check --target wasm-gc
+
+      - name: Unit tests
+        run: moon test --target wasm-gc
+
+      - name: Build wasm
+        run: moon build --target wasm-gc
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Node DOM-shim integration tests
+        run: node js/e2e.mjs
+
+      - name: Real browser integration tests
+        run: node js/browser_e2e.mjs
