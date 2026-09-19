@@ -101,6 +101,7 @@ pub fn Text::append(Self, Self) -> Self
 pub fn Text::clip_pos(Self, Int) -> Int
 pub fn Text::empty() -> Self
 pub fn Text::eq(Self, Self) -> Bool
+pub fn Text::is_char_boundary(Self, Int) -> Bool
 pub fn Text::is_empty(Self) -> Bool
 pub fn Text::iter_lines(Self) -> Iter[String]
 pub fn Text::length(Self) -> Int
@@ -116,6 +117,8 @@ pub fn Text::of(String) -> Self
 pub fn Text::pos(Self, Int, Int) -> Int
 pub fn Text::replace(Self, Int, Int, String) -> Self
 pub fn Text::slice(Self, Int, Int) -> String
+pub fn Text::snap_pos_left(Self, Int) -> Int
+pub fn Text::snap_pos_right(Self, Int) -> Int
 pub fn Text::substring(Self, Int, Int) -> String
 pub fn Text::to_string(Self) -> String
 

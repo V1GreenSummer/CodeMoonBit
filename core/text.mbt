@@ -114,9 +114,53 @@ pub fn Text::clip_pos(self : Text, pos : Int) -> Int {
 }
 
 ///|
+/// True when `pos` is a legal offset, i.e. it does not fall between a high
+/// surrogate and its low surrogate.
+pub fn Text::is_char_boundary(self : Text, pos : Int) -> Bool {
+  if pos <= 0 || pos >= self.len {
+    return true
+  }
+  let (line, col) = self.line_col(pos)
+  let s = self.lines[line]
+  if col == 0 || col == s.length() {
+    return true
+  }
+  let prev = s.unsafe_get(col - 1).to_int()
+  let next = s.unsafe_get(col).to_int()
+  !(prev >= 0xD800 && prev <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF)
+}
+
+///|
+/// Snaps an offset down to the nearest legal character boundary.
+pub fn Text::snap_pos_left(self : Text, pos : Int) -> Int {
+  let p = self.clip_pos(pos)
+  let mut result = p
+  while result > 0 && !self.is_char_boundary(result) {
+    result = result - 1
+  }
+  result
+}
+
+///|
+/// Snaps an offset up to the nearest legal character boundary.
+pub fn Text::snap_pos_right(self : Text, pos : Int) -> Int {
+  let p = self.clip_pos(pos)
+  let mut result = p
+  while result < self.len && !self.is_char_boundary(result) {
+    result = result + 1
+  }
+  result
+}
+
+///|
 pub fn Text::slice(self : Text, from : Int, to : Int) -> String {
-  let f = self.clip_pos(from)
-  let t = self.clip_pos(to)
+  let cf = self.clip_pos(from)
+  let ct = self.clip_pos(to)
+  if cf >= ct {
+    return ""
+  }
+  let f = self.snap_pos_left(cf)
+  let t = self.snap_pos_right(ct)
   if f >= t {
     return ""
   }
@@ -144,15 +188,34 @@ pub fn Text::line_slice(
   to : Int,
 ) -> String {
   let s = self.lines[line]
-  let f = if from < 0 {
+  let f0 = if from < 0 {
     0
   } else if from > s.length() {
     s.length()
   } else {
     from
   }
-  let t = if to < f { f } else if to > s.length() { s.length() } else { to }
+  let t0 = if to < f0 { f0 } else if to > s.length() { s.length() } else { to }
+  if f0 >= t0 {
+    return ""
+  }
+  let f = if self.is_line_boundary(line, f0) { f0 } else { f0 - 1 }
+  let t = if self.is_line_boundary(line, t0) { t0 } else { t0 + 1 }
+  if f >= t {
+    return ""
+  }
   s[f:t].to_owned()
+}
+
+///|
+fn Text::is_line_boundary(self : Text, line : Int, col : Int) -> Bool {
+  let s = self.lines[line]
+  if col <= 0 || col >= s.length() {
+    return true
+  }
+  let prev = s.unsafe_get(col - 1).to_int()
+  let next = s.unsafe_get(col).to_int()
+  !(prev >= 0xD800 && prev <= 0xDBFF && next >= 0xDC00 && next <= 0xDFFF)
 }
 
 ///|
@@ -171,8 +234,19 @@ pub fn Text::to_string(self : Text) -> String {
 
 ///|
 pub fn Text::replace(self : Text, from : Int, to : Int, text : String) -> Text {
-  let f = self.clip_pos(from)
-  let t = if to < f { f } else if to > self.len { self.len } else { to }
+  let cf = self.clip_pos(from)
+  let ct = self.clip_pos(to)
+  let f = self.snap_pos_left(cf)
+  let t = if cf == ct {
+    f
+  } else {
+    let snapped = self.snap_pos_right(ct)
+    if snapped < f {
+      f
+    } else {
+      snapped
+    }
+  }
   if f == t && text.length() == 0 {
     return self
   }
@@ -288,4 +362,31 @@ test "text unicode code units" {
   assert_eq(t.line_length(0), 4)
   let t2 = t.replace(1, 3, "x")
   assert_eq(t2.to_string(), "axb")
+}
+
+///|
+test "text surrogate boundaries" {
+  let t = Text::of("😀b")
+  assert_eq(t.length(), 3)
+  assert_false(t.is_char_boundary(1))
+  assert_true(t.is_char_boundary(0))
+  assert_true(t.is_char_boundary(2))
+  assert_eq(t.snap_pos_left(1), 0)
+  assert_eq(t.snap_pos_right(1), 2)
+  assert_eq(t.slice(1, 1), "")
+  assert_eq(t.slice(1, 2), "😀")
+  assert_eq(t.slice(1, 3), "😀b")
+  let t2 = t.replace(1, 1, "x")
+  assert_eq(t2.to_string(), "x😀b")
+  let t3 = t.replace(0, 1, "")
+  assert_eq(t3.to_string(), "b")
+  assert_eq(t.line_slice(0, 1, 2), "😀")
+  assert_eq(t.line_slice(0, 1, 1), "")
+}
+
+///|
+test "text replace at legal boundaries is unchanged" {
+  let t = Text::of("hello world")
+  assert_eq(t.replace(5, 5, ",").to_string(), "hello, world")
+  assert_eq(t.replace(0, 5, "hi").to_string(), "hi world")
 }
