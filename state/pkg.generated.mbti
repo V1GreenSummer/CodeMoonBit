@@ -1,0 +1,138 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/state"
+
+import {
+  "codemoonbit/codemoonbit/core",
+}
+
+// Values
+pub fn fresh_state_id() -> Int
+
+pub let history_field : StateField[HistoryState]
+
+pub fn redo_spec(EditorState) -> TransactionSpec?
+
+pub fn undo_spec(EditorState) -> TransactionSpec?
+
+// Errors
+
+// Types and methods
+pub(all) enum Annotation {
+  UserEvent(String)
+  AddToHistory(Bool)
+  Remote(Bool)
+  ScrollIntoView(Bool)
+}
+
+pub struct EditorState {
+  // private fields
+}
+pub fn EditorState::apply(Self, TransactionSpec) -> Self
+pub fn EditorState::create(config? : Array[Extension], doc? : @core.Text, selection? : @core.EditorSelection) -> Self
+pub fn EditorState::doc(Self) -> @core.Text
+pub fn EditorState::extensions(Self) -> Extension
+pub fn[T] EditorState::facet(Self, Facet[T]) -> T
+pub fn[T] EditorState::field(Self, StateField[T]) -> T
+pub fn EditorState::has_field(Self, Int) -> Bool
+pub fn EditorState::length(Self) -> Int
+pub fn EditorState::line(Self, Int) -> String
+pub fn EditorState::line_count(Self) -> Int
+pub fn EditorState::selection(Self) -> @core.EditorSelection
+pub fn EditorState::slice(Self, Int, Int) -> String
+pub fn EditorState::to_string(Self) -> String
+pub fn EditorState::update(Self, TransactionSpec) -> Transaction
+pub fn EditorState::update_doc(Self, @core.Text) -> Self
+
+pub struct EffectEntry {
+  // private fields
+}
+
+pub struct ErasedField {
+  // private fields
+}
+
+pub enum ExtItem {
+  FacetValue(Int, () -> Unit, () -> () -> Unit)
+  Field(ErasedField)
+}
+
+pub struct Extension {
+  // private fields
+}
+pub fn Extension::empty() -> Self
+pub fn Extension::facet_items(Self) -> Array[(Int, () -> Unit, () -> () -> Unit)]
+pub fn Extension::fields(Self) -> Array[ErasedField]
+pub fn Extension::items(Self) -> Array[ExtItem]
+pub fn Extension::of(Array[Self]) -> Self
+pub fn Extension::single(ExtItem) -> Self
+pub fn Extension::size(Self) -> Int
+pub impl Add for Extension
+
+pub struct Facet[T] {
+  // private fields
+}
+pub fn[T] Facet::id(Self[T]) -> Int
+pub fn[T] Facet::new(default~ : () -> T, combine~ : (T, T) -> T) -> Self[T]
+pub fn[T] Facet::of(Self[T], T) -> Extension
+pub fn[T] Facet::of_array(Self[T], Array[T]) -> Extension
+
+pub(all) struct HistoryGroup {
+  before : @core.Text
+  after : @core.Text
+  selection_before : @core.EditorSelection
+  selection_after : @core.EditorSelection
+  event : String
+  count : Int
+}
+
+pub(all) struct HistoryState {
+  done : Array[HistoryGroup]
+  undone : Array[HistoryGroup]
+}
+pub fn HistoryState::can_redo(Self) -> Bool
+pub fn HistoryState::can_undo(Self) -> Bool
+pub fn HistoryState::empty() -> Self
+
+pub struct StateEffect[T] {
+  // private fields
+}
+pub fn[T] StateEffect::id(Self[T]) -> Int
+pub fn[T] StateEffect::new() -> Self[T]
+pub fn[T] StateEffect::of(Self[T], T) -> EffectEntry
+
+pub struct StateField[T] {
+  // private fields
+}
+pub fn[T] StateField::extension(Self[T]) -> Extension
+pub fn[T] StateField::id(Self[T]) -> Int
+pub fn[T] StateField::new(init~ : (EditorState) -> T, update? : (T, Transaction) -> T) -> Self[T]
+
+pub struct Transaction {
+  // private fields
+}
+pub fn Transaction::add_to_history(Self) -> Bool
+pub fn Transaction::annotation(Self, Annotation) -> Annotation?
+pub fn Transaction::annotations(Self) -> Array[Annotation]
+pub fn Transaction::changes(Self) -> @core.ChangeSet
+pub fn[T] Transaction::effect(Self, StateEffect[T]) -> T?
+pub fn[T] Transaction::effects(Self, StateEffect[T]) -> Array[T]
+pub fn Transaction::is_remote(Self) -> Bool
+pub fn Transaction::new_doc(Self) -> @core.Text
+pub fn Transaction::scroll_into_view(Self) -> Bool
+pub fn Transaction::selection(Self) -> @core.EditorSelection
+pub fn Transaction::start_state(Self) -> EditorState
+pub fn Transaction::state(Self) -> EditorState
+pub fn Transaction::user_event(Self) -> String?
+
+pub(all) struct TransactionSpec {
+  changes : @core.ChangeSet?
+  selection : @core.EditorSelection?
+  effects : Array[EffectEntry]
+  annotations : Array[Annotation]
+  scroll_into_view : Bool?
+}
+pub fn TransactionSpec::new(changes? : @core.ChangeSet, selection? : @core.EditorSelection, effects? : Array[EffectEntry], annotations? : Array[Annotation], scroll_into_view? : Bool) -> Self
+
+// Type aliases
+
+// Traits
