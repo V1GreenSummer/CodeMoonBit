@@ -16,6 +16,7 @@ import {
   forgetEditor,
   getWasm,
   hideSearchPanel,
+  onUpdate as subscribeUpdate,
   showSearchPanel,
 } from "./dom_runtime.js";
 
@@ -148,8 +149,35 @@ export async function createEditor(container, options = {}) {
     getHTML() {
       return wasm.cm_get_html(id);
     },
+    getSelection() {
+      return JSON.parse(wasm.cm_get_selection(id));
+    },
     getState() {
       return wasm.cm_get_state(id);
+    },
+    /**
+     * Subscribe to document/selection updates. The callback is invoked once
+     * asynchronously after the editor is created, then after every
+     * state-changing operation (edits, selection changes, `setDoc`,
+     * `setOption`). Returns an unsubscribe function.
+     */
+    onUpdate(callback) {
+      if (typeof callback !== "function") return () => {};
+      let notified = false;
+      const unsubscribe = subscribeUpdate(id, () => {
+        notified = true;
+        callback();
+      });
+      Promise.resolve().then(() => {
+        if (notified) return;
+        notified = true;
+        try {
+          callback();
+        } catch (error) {
+          console.error("CodeMoonBit update listener error:", error);
+        }
+      });
+      return unsubscribe;
     },
     openSearch() {
       showSearchPanel(id);

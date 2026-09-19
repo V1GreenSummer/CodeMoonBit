@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <title>CodeMoonBit Browser Test</title>
+    <link rel="stylesheet" href="../js/codemoonbit.css" />
     <link rel="stylesheet" href="../demo/style.css" />
     <style>
       body {
@@ -39,6 +40,7 @@
 
       window.tokenCount = (token) => document.querySelectorAll(`[data-token="${token}"]`).length;
       window.count = (selector) => document.querySelectorAll(selector).length;
+      window.createEditor = createEditor;
     </script>
   </body>
 </html>

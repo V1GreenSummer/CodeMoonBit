@@ -14,7 +14,12 @@ import {
   getImportsDeps,
   loadWasm,
 } from "./shim_dom.js";
-import { getWasm, showSearchPanel, hideSearchPanel } from "./dom_runtime.js";
+import {
+  getWasm,
+  showSearchPanel,
+  hideSearchPanel,
+  __testForward,
+} from "./dom_runtime.js";
 
 function findMainWasm() {
   const candidates = [
@@ -88,15 +93,27 @@ test("printable key inserts at the cursor", () => {
   assert.match(state(), /sel=6:6/);
 });
 
-test("ArrowLeft moves the cursor left", () => {
-  // NOTE: run while the cursor is inside a line. `code_unit_at` in
-  // `input/commands.mbt` reads `line[col]` where `col` may equal the line
-  // length, so arrow/backspace right at a newline boundary aborts inside the
-  // frozen MoonBit code. The e2e avoids that path.
+test("ArrowLeft moves the cursor left across a line boundary", () => {
+  // The cursor sits at the end of the first line ("hello!"), i.e. exactly on
+  // the newline boundary; crossing it must be an ordinary regression case.
+  assert.match(state(), /sel=6:6/);
   const handled = wasm.cm_key(1, "ArrowLeft", "ArrowLeft", 0);
   assert.equal(handled, 1);
   assert.match(state(), /sel=5:5/);
   assert.equal(wasm.cm_key(1, "ArrowRight", "ArrowRight", 0), 1);
+  assert.match(state(), /sel=6:6/);
+});
+
+test("Backspace at a line start joins the lines", () => {
+  wasm.cm_set_doc(1, "ab\ncd");
+  assert.equal(wasm.cm_key(1, "ArrowDown", "ArrowDown", 0), 1);
+  assert.match(state(), /sel=3:3/);
+  assert.equal(wasm.cm_key(1, "Backspace", "Backspace", 0), 1);
+  assert.equal(doc(), "abcd");
+  assert.match(state(), /sel=2:2/);
+  // Restore the document expected by the next test.
+  wasm.cm_set_doc(1, "hello!\nworld");
+  wasm.cm_key(1, "End", "End", 0);
   assert.match(state(), /sel=6:6/);
 });
 
@@ -374,6 +391,163 @@ test("search panel controls drive the wasm exports", () => {
 test("cm_destroy detaches cleanly", () => {
   wasm.cm_destroy(1);
   assert.equal(wasm.cm_get_doc(1), "");
+});
+
+test("composition phases build and commit the composed text", () => {
+  const container5 = createElement("div");
+  wasm.cm_create(container5, 5);
+  wasm.cm_set_doc(5, "");
+  wasm.cm_composition(5, 0, "");
+  assert.equal(doc(5), "");
+  wasm.cm_composition(5, 1, "ni");
+  assert.equal(doc(5), "ni");
+  wasm.cm_composition(5, 1, "你");
+  assert.equal(doc(5), "你");
+  wasm.cm_composition(5, 2, "你");
+  assert.equal(doc(5), "你");
+  wasm.cm_undo(5);
+  assert.equal(doc(5), "");
+  wasm.cm_destroy(5);
+});
+
+test("composition replaces the selection and undoes in one step", () => {
+  const container6 = createElement("div");
+  wasm.cm_create(container6, 6);
+  wasm.cm_set_doc(6, "hello");
+  assert.equal(wasm.cm_key(6, "a", "KeyA", 2), 1);
+  assert.match(state(6), /sel=0:5/);
+  wasm.cm_composition(6, 0, "");
+  wasm.cm_composition(6, 1, "你");
+  wasm.cm_composition(6, 2, "你");
+  assert.equal(doc(6), "你");
+  wasm.cm_undo(6);
+  assert.equal(doc(6), "hello");
+  assert.match(state(6), /sel=0:5/);
+  wasm.cm_destroy(6);
+});
+
+test("runtime skips composition beforeinput and blocks dispatch_input", () => {
+  const container7 = createElement("div");
+  wasm.cm_create(container7, 7);
+  wasm.cm_set_doc(7, "");
+  assert.equal(__testForward.beforeInput(7, "你", "insertCompositionText"), 0);
+  assert.equal(doc(7), "");
+  assert.equal(__testForward.beforeInput(7, "你", "insertFromComposition"), 0);
+  assert.equal(doc(7), "");
+  __testForward.composition(7, 0, "");
+  __testForward.composition(7, 1, "ni");
+  __testForward.composition(7, 1, "你");
+  __testForward.composition(7, 2, "你");
+  assert.equal(doc(7), "你");
+  wasm.cm_undo(7);
+  assert.equal(doc(7), "");
+  __testForward.composition(7, 0, "");
+  assert.equal(wasm.cm_input(7, "x"), 0);
+  assert.equal(doc(7), "");
+  __testForward.composition(7, 1, "中");
+  assert.equal(doc(7), "中");
+  assert.equal(wasm.cm_input(7, "x"), 0);
+  assert.equal(doc(7), "中");
+  __testForward.composition(7, 2, "中");
+  assert.equal(doc(7), "中");
+  wasm.cm_destroy(7);
+});
+
+test("tabSize rebuilds the indentation configuration", () => {
+  const container8 = createElement("div");
+  wasm.cm_create(container8, 8);
+  wasm.cm_set_doc(8, "ab");
+  wasm.cm_set_option(8, "tabSize", "2");
+  assert.equal(container8.__cm.content.style.tabSize, "2");
+  assert.equal(wasm.cm_key(8, "Tab", "Tab", 0), 1);
+  assert.equal(doc(8), "  ab");
+  wasm.cm_set_option(8, "tabSize", "4");
+  wasm.cm_set_doc(8, "ab");
+  assert.equal(wasm.cm_key(8, "Tab", "Tab", 0), 1);
+  assert.equal(doc(8), "    ab");
+  wasm.cm_destroy(8);
+});
+
+test("composition only replaces the composed range", () => {
+  const container10 = createElement("div");
+  wasm.cm_create(container10, 10);
+  wasm.cm_set_doc(10, "ab");
+  assert.equal(wasm.cm_key(10, "ArrowRight", "ArrowRight", 0), 1);
+  wasm.cm_composition(10, 0, "");
+  wasm.cm_composition(10, 1, "xy");
+  wasm.cm_composition(10, 1, "你");
+  wasm.cm_composition(10, 2, "你");
+  assert.equal(doc(10), "a你b");
+  wasm.cm_undo(10);
+  assert.equal(doc(10), "ab");
+  wasm.cm_destroy(10);
+});
+
+test("fold_click folds and unfolds without moving the cursor", () => {
+  const container9 = createElement("div");
+  wasm.cm_create(container9, 9);
+  wasm.cm_set_option(9, "language", "moonbit");
+  wasm.cm_set_doc(9, "fn a() {\n  x\n}\n");
+  assert.equal(wasm.cm_key(9, "ArrowDown", "ArrowDown", 0), 1);
+  assert.match(state(9), /sel=9:9/);
+  wasm.cm_fold_click(9, 0);
+  assert.match(state(9), /folds=1/);
+  assert.match(state(9), /sel=9:9/);
+  wasm.cm_fold_click(9, 0);
+  assert.match(state(9), /folds=0/);
+  assert.match(state(9), /sel=9:9/);
+  wasm.cm_destroy(9);
+});
+
+test("onUpdate fires for edits and selection changes but not for scrolling", () => {
+  const container11 = createElement("div");
+  wasm.cm_create(container11, 11);
+
+  let updates = 0;
+  const unsubscribe = forward.onUpdate(11, () => {
+    updates += 1;
+  });
+
+  wasm.cm_set_doc(11, "abc");
+  assert.ok(updates >= 1, "expected set_doc to notify, got " + updates);
+  updates = 0;
+
+  assert.equal(wasm.cm_input(11, "x"), 1);
+  assert.equal(updates, 1);
+
+  updates = 0;
+  forward.dispatchScroll(11, 20, 0);
+  assert.equal(updates, 0);
+
+  updates = 0;
+  assert.equal(wasm.cm_key(11, "a", "KeyA", 2), 1);
+  assert.equal(updates, 1);
+
+  unsubscribe();
+  wasm.cm_set_doc(11, "ignored");
+  assert.equal(updates, 1);
+  wasm.cm_destroy(11);
+});
+
+test("throwing update listeners are reported but do not break the editor", () => {
+  const container12 = createElement("div");
+  wasm.cm_create(container12, 12);
+  wasm.cm_set_doc(12, "ab");
+  wasm.cm_key(12, "End", "End", 0);
+  forward.onUpdate(12, () => {
+    throw new Error("listener failure");
+  });
+  const originalError = console.error;
+  const reported = [];
+  console.error = (...args) => reported.push(args);
+  try {
+    assert.equal(wasm.cm_input(12, "c"), 1);
+    assert.equal(doc(12), "abc");
+  } finally {
+    console.error = originalError;
+  }
+  assert.equal(reported.length, 1);
+  wasm.cm_destroy(12);
 });
 
 console.log("");

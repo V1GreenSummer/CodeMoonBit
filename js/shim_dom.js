@@ -9,7 +9,7 @@
 
 import { readFile } from "node:fs/promises";
 import { pathToFileURL } from "node:url";
-import { createDomImports, attachWasm, __testForward } from "./dom_runtime.js";
+import { createDomImports, attachWasm, __testForward, onUpdate } from "./dom_runtime.js";
 
 const VOID_TAGS = new Set([
   "area",
@@ -561,6 +561,7 @@ export function getImportsDeps() {
     dispatchCut: (id) => __testForward.cut(id),
     dispatchScroll: (id, top, left) => __testForward.scroll(id, top, left),
     dispatchFocus: (id, focused) => __testForward.focus(id, focused),
+    onUpdate: (id, callback) => onUpdate(id, callback),
   };
 }
 

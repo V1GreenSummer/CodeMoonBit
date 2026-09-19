@@ -389,6 +389,49 @@ async function main() {
     await pressCtrl("z");
     runner.check("undo restores the replaced document", (await editorCall("getDoc()")).length > 5);
 
+    // 5b. structured selection API
+    await editorCall("setDoc('hello world')");
+    await editorCall("focus()");
+    await pressCtrl("a");
+    const selectAllSelection = await editorCall("getSelection()");
+    runner.check(
+      "getSelection reports the select-all range",
+      selectAllSelection !== null &&
+        selectAllSelection.main === 0 &&
+        selectAllSelection.ranges.length === 1 &&
+        selectAllSelection.ranges[0].anchor === 0 &&
+        selectAllSelection.ranges[0].head === 11,
+      JSON.stringify(selectAllSelection),
+    );
+    const clickPoint = await evaluate(`(() => {
+      const scroller = document.querySelector(".cm-scroller");
+      const r = scroller.getBoundingClientRect();
+      return { x: r.left + 40, y: r.top + 14 };
+    })()`);
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: clickPoint.x,
+      y: clickPoint.y,
+      button: "left",
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: clickPoint.x,
+      y: clickPoint.y,
+      button: "left",
+      clickCount: 1,
+    });
+    await sleep(50);
+    const clickSelection = await editorCall("getSelection()");
+    runner.check(
+      "getSelection reports a collapsed cursor after a plain click",
+      clickSelection !== null &&
+        clickSelection.ranges.length === 1 &&
+        clickSelection.ranges[0].anchor === clickSelection.ranges[0].head,
+      JSON.stringify(clickSelection),
+    );
+
     // 6. auto indent
     await editorCall("setDoc('  foo')");
     await press("End", MOD_CTRL);
@@ -541,7 +584,225 @@ async function main() {
       `first rendered line: ${JSON.stringify(firstRendered)}`,
     );
 
-    // 15. screenshot for visual inspection
+    // 15. IME composition through the real DevTools IME API
+    await editorCall("setDoc('')");
+    await editorCall("focus()");
+    let imeSupported = true;
+    try {
+      await cdp.send("Input.imeSetComposition", {
+        selectionStart: 0,
+        selectionEnd: 0,
+        text: "ni",
+        replacementStart: 0,
+        replacementEnd: 0,
+      });
+      await cdp.send("Input.imeSetComposition", {
+        selectionStart: 1,
+        selectionEnd: 1,
+        text: "你",
+        replacementStart: 0,
+        replacementEnd: 2,
+      });
+      await cdp.send("Input.insertText", { text: "你" });
+    } catch (error) {
+      imeSupported = false;
+    }
+    if (!imeSupported) {
+      await editorCall("setDoc('')");
+      await evaluate(`(() => {
+        const input = document.querySelector(".cm-input");
+        const fire = (type, data) => input.dispatchEvent(new CompositionEvent(type, { data }));
+        fire("compositionstart", "");
+        fire("compositionupdate", "ni");
+        fire("compositionupdate", "你");
+        fire("compositionend", "你");
+      })()`);
+    }
+    await waitFor("window.editor.getDoc() === '你'");
+    runner.check(
+      "IME composition commits the composed text",
+      (await editorCall("getDoc()")) === "你",
+      JSON.stringify(await editorCall("getDoc()")),
+    );
+    await editorCall("undo()");
+    await waitFor("window.editor.getDoc() === ''");
+    runner.check(
+      "one undo removes the whole composition",
+      (await editorCall("getDoc()")) === "",
+      JSON.stringify(await editorCall("getDoc()")),
+    );
+
+    // 16. arbitrary container and independent editor instances
+    const secondId = await evaluate(`(async () => {
+      const container = document.createElement("div");
+      container.style.height = "240px";
+      container.style.width = "640px";
+      document.body.appendChild(container);
+      const editor2 = await window.createEditor(container, {
+        value: "x".repeat(400),
+        language: "plain",
+        lineWrapping: true,
+      });
+      window.editor2 = editor2;
+      window.editor2Container = container;
+      window.updateCount = 0;
+      editor2.onUpdate(() => { window.updateCount += 1; });
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      return editor2.id;
+    })()`);
+    runner.check(
+      "a second editor is created in a plain container",
+      typeof secondId === "number" && secondId !== 1,
+      `id=${secondId}`,
+    );
+    const containerMetrics = await evaluate(`(() => {
+      const container = window.editor2Container;
+      return {
+        frame: container.querySelector(".cm-editor").getBoundingClientRect().height,
+        scroller: container.querySelector(".cm-scroller").getBoundingClientRect().height,
+      };
+    })()`);
+    runner.check(
+      "the editor fills an arbitrary fixed-height container",
+      Math.abs(containerMetrics.frame - 240) < 2 &&
+        Math.abs(containerMetrics.scroller - 240) < 2,
+      JSON.stringify(containerMetrics),
+    );
+    const segmentCount = await evaluate(
+      'window.editor2Container.querySelectorAll(".cm-line").length',
+    );
+    runner.check(
+      "wrapping in a plain container renders one segment per div",
+      segmentCount >= 2,
+      `segments=${segmentCount}`,
+    );
+    const lineOverflow = await evaluate(
+      'getComputedStyle(window.editor2Container.querySelector(".cm-line")).overflow',
+    );
+    runner.check("line segments clip their overflow", lineOverflow === "hidden", lineOverflow);
+    runner.check(
+      "onUpdate fires once right after creation",
+      (await evaluate("window.updateCount")) === 1,
+      `count=${await evaluate("window.updateCount")}`,
+    );
+
+    await editorCall("setDoc('first only')");
+    await editorCall("focus()");
+    await press("End", MOD_CTRL);
+    await typeChar("?");
+    await waitFor("window.editor.getDoc() === 'first only?'");
+    runner.check(
+      "typing in one editor updates only that editor",
+      (await evaluate("window.editor2.getDoc()")) === "x".repeat(400),
+      (await evaluate("window.editor2.getDoc()")).slice(0, 24),
+    );
+    const firstCounts = await evaluate(`(() => {
+      const container = document.getElementById("editor");
+      return {
+        gutters: container.querySelectorAll(".cm-gutter-line").length,
+        lines: container.querySelectorAll(".cm-line").length,
+      };
+    })()`);
+    const secondCounts = await evaluate(`(() => {
+      const container = window.editor2Container;
+      return {
+        gutters: container.querySelectorAll(".cm-gutter-line").length,
+        lines: container.querySelectorAll(".cm-line").length,
+      };
+    })()`);
+    runner.check(
+      "both editors keep their own gutter/line DOM",
+      firstCounts.gutters >= 1 &&
+        firstCounts.lines >= 1 &&
+        secondCounts.gutters >= 1 &&
+        secondCounts.lines >= 2 &&
+        (await evaluate('document.querySelectorAll(".cm-editor").length')) === 2,
+      JSON.stringify({ firstCounts, secondCounts }),
+    );
+
+    // 17. Unicode boundary safety for mouse and word selection
+    await editorCall("setDoc('\\u{1F600}b')");
+    await editorCall("focus()");
+    await sleep(150);
+    const emojiRect = await evaluate(`(() => {
+      const line = document.querySelector("#editor .cm-line");
+      const r = line.getBoundingClientRect();
+      return { left: r.left, mid: r.top + r.height / 2 };
+    })()`);
+    const clickAt = async (x, count = 1) => {
+      await cdp.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        x,
+        y: emojiRect.mid,
+        button: "left",
+        clickCount: count,
+      });
+      await cdp.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        x,
+        y: emojiRect.mid,
+        button: "left",
+        clickCount: count,
+      });
+    };
+    await clickAt(emojiRect.left + 6);
+    await sleep(100);
+    const leftState = await editorCall("getState()");
+    runner.check(
+      "click inside an emoji never selects half a surrogate pair",
+      /sel=[02]:[02]/.test(leftState) && !leftState.includes("sel=1:1"),
+      leftState,
+    );
+    await clickAt(emojiRect.left + 6, 2);
+    await sleep(100);
+    const selectionJson = await editorCall("getSelection()");
+    runner.check(
+      "double click selects the whole emoji",
+      selectionJson &&
+        selectionJson.main === 0 &&
+        selectionJson.ranges &&
+        selectionJson.ranges[0] &&
+        selectionJson.ranges[0].anchor === 0 &&
+        selectionJson.ranges[0].head === 2,
+      JSON.stringify(selectionJson),
+    );
+    runner.check(
+      "copying an emoji selection is safe",
+      (await editorCall("selectedText()")) === "\u{1F600}",
+      await editorCall("selectedText()"),
+    );
+    await press("Backspace");
+    await sleep(100);
+    runner.check(
+      "backspace after an emoji selection is safe",
+      (await editorCall("getDoc()")) === "b",
+      await editorCall("getDoc()"),
+    );
+
+    // 18. font changes re-measure character widths
+    await editorCall("setDoc('mmmm')");
+    await editorCall("focus()");
+    await press("End", MOD_CTRL);
+    await sleep(100);
+    const cursorBefore = await evaluate(
+      'parseFloat(document.querySelector("#editor .cm-cursor").style.left)',
+    );
+    await editorCall('setOption("font", "28px monospace")');
+    await sleep(200);
+    const cursorAfter = await evaluate(
+      'parseFloat(document.querySelector("#editor .cm-cursor").style.left)',
+    );
+    runner.check(
+      "changing the font re-measures character widths",
+      cursorAfter > cursorBefore * 1.5,
+      `before=${cursorBefore} after=${cursorAfter}`,
+    );
+    await editorCall(
+      'setOption("font", "14px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace")',
+    );
+    await sleep(100);
+
+    // 19. screenshot for visual inspection
     const shot = await cdp.send("Page.captureScreenshot", { format: "png" });
     const shotPath = process.env.CM_SCREENSHOT || path.join(ROOT, "_build", "browser-e2e.png");
     fs.mkdirSync(path.dirname(shotPath), { recursive: true });

@@ -452,6 +452,48 @@ export function forgetEditor(id) {
     removeAllListeners(record);
     editors.delete(id);
   }
+  updateListeners.delete(id);
+}
+
+// ---------------------------------------------------------------------------
+// host subscriptions
+// ---------------------------------------------------------------------------
+
+const updateListeners = new Map();
+
+/**
+ * Register `callback` to run after wasm reports a state change for `id`
+ * (edits, selection changes, `set_doc`, `set_state`). Returns an unsubscribe
+ * function. Exceptions thrown by a listener are reported and do not interrupt
+ * the editor or the other listeners.
+ */
+export function onUpdate(id, callback) {
+  if (typeof callback !== "function") return () => {};
+  let listeners = updateListeners.get(id);
+  if (!listeners) {
+    listeners = [];
+    updateListeners.set(id, listeners);
+  }
+  listeners.push(callback);
+  return () => {
+    const current = updateListeners.get(id);
+    if (!current) return;
+    const index = current.indexOf(callback);
+    if (index >= 0) current.splice(index, 1);
+    if (current.length === 0) updateListeners.delete(id);
+  };
+}
+
+function notifyUpdate(id) {
+  const listeners = updateListeners.get(id);
+  if (!listeners || listeners.length === 0) return;
+  for (const listener of listeners.slice()) {
+    try {
+      listener();
+    } catch (error) {
+      reportError(error);
+    }
+  }
 }
 
 /** Apply JS-only side effects of an option (scroller white-space, ...). */
@@ -496,12 +538,41 @@ const SCROLL_KEYS = new Set([
   " ",
 ]);
 
+// Platform modifier bit: tells the wasm keymap that `Mod-` bindings should
+// match the meta (Cmd) key instead of ctrl. Mirrors `mod_platform` in
+// `input/keymap.mbt`.
+const PLATFORM_MOD = 16;
+
+let applePlatform = null;
+
+function isApplePlatform() {
+  if (applePlatform !== null) return applePlatform;
+  applePlatform = false;
+  try {
+    const nav = globalThis.navigator;
+    if (nav) {
+      const data = nav.userAgentData;
+      if (data && typeof data.platform === "string" && data.platform.length > 0) {
+        applePlatform = data.platform.indexOf("Mac") >= 0;
+      } else if (typeof nav.platform === "string" && nav.platform.length > 0) {
+        applePlatform = nav.platform.indexOf("Mac") === 0;
+      } else if (typeof nav.userAgent === "string") {
+        applePlatform = nav.userAgent.indexOf("Mac") >= 0;
+      }
+    }
+  } catch (error) {
+    reportError(error);
+  }
+  return applePlatform;
+}
+
 function modsFromEvent(event) {
   return (
     (event.shiftKey ? 1 : 0) |
     (event.ctrlKey ? 2 : 0) |
     (event.altKey ? 4 : 0) |
-    (event.metaKey ? 8 : 0)
+    (event.metaKey ? 8 : 0) |
+    (isApplePlatform() ? PLATFORM_MOD : 0)
   );
 }
 
@@ -621,7 +692,10 @@ function handleBeforeInput(record, event) {
   if (record.editorId == null || !wasmExports) return 0;
   const type = event.inputType || "";
   const data = event.data;
-  if ((type === "insertText" || type === "insertFromComposition") && data) {
+  // `insertCompositionText` / `insertFromComposition` are the browser's view
+  // of an IME session whose single source of truth is the
+  // compositionstart/update/end sequence, so they are never forwarded here.
+  if (type === "insertText" && data) {
     preventEvent(event);
     let handled = 0;
     try {
@@ -1009,6 +1083,9 @@ export function createDomImports() {
     request_measure() {
       // Rendered measurements happen lazily inside `set_html`; nothing to do.
     },
+    notify_update(editorId) {
+      notifyUpdate(editorId);
+    },
     log(message) {
       if (typeof console !== "undefined" && console.log) console.log(message);
     },
@@ -1104,6 +1181,16 @@ export const __testForward = {
       target: record.input,
     });
     return handleBeforeInput(record, event);
+  },
+  composition(id, phase, text) {
+    const record = editors.get(id);
+    if (!record) return;
+    const event = fakeEvent({
+      type: "composition" + (phase === 0 ? "start" : phase === 1 ? "update" : "end"),
+      data: text == null ? "" : text,
+      target: record.input,
+    });
+    handleComposition(record, phase, event);
   },
   paste(id, text) {
     const record = editors.get(id);

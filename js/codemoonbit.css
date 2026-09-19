@@ -1,0 +1,293 @@
+/*
+ * codemoonbit.css
+ *
+ * Distributable editor stylesheet. Every rule is scoped to the `.cm-editor`
+ * root element created by `createEditor` (js/browser.js), so it can be dropped
+ * into any page and any container.
+ *
+ * The container must have a definite height (for example `height: 300px`);
+ * `.cm-editor` fills it via `height: 100%`. Add the `cm-theme-dark` class to
+ * the editor root (the `theme: "dark"` option does this) for the dark palette.
+ */
+
+.cm-editor {
+  --cm-bg: #ffffff;
+  --cm-fg: #24292f;
+  --cm-gutter-bg: #f6f8fa;
+  --cm-gutter-fg: #8c959f;
+  --cm-active-bg: #f0f3f6;
+  --cm-selection: rgba(84, 174, 255, 0.35);
+  --cm-cursor: #0969da;
+  --cm-search: rgba(255, 196, 0, 0.4);
+  --cm-search-current: rgba(255, 140, 0, 0.6);
+  --cm-bracket: rgba(0, 150, 255, 0.35);
+  --cm-keyword: #cf222e;
+  --cm-type: #953800;
+  --cm-variable: #24292f;
+  --cm-property: #0550ae;
+  --cm-atom: #0550ae;
+  --cm-number: #0550ae;
+  --cm-string: #0a3069;
+  --cm-comment: #6e7781;
+  --cm-operator: #cf222e;
+  --cm-punctuation: #57606a;
+  --cm-meta: #8250df;
+  --cm-tag: #116329;
+  --cm-attribute: #0550ae;
+  --cm-invalid: #ffffff;
+  --cm-invalid-bg: #cf222e;
+
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  background: var(--cm-bg);
+  color: var(--cm-fg);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 20px;
+  -webkit-text-size-adjust: 100%;
+}
+
+.cm-editor.cm-theme-dark,
+.cm-theme-dark .cm-editor {
+  --cm-bg: #0d1117;
+  --cm-fg: #e6edf3;
+  --cm-gutter-bg: #010409;
+  --cm-gutter-fg: #6e7681;
+  --cm-active-bg: #161b22;
+  --cm-selection: rgba(56, 139, 253, 0.4);
+  --cm-cursor: #58a6ff;
+  --cm-search: rgba(255, 196, 0, 0.4);
+  --cm-search-current: rgba(255, 140, 0, 0.6);
+  --cm-bracket: rgba(0, 150, 255, 0.35);
+  --cm-keyword: #ff7b72;
+  --cm-type: #ffa657;
+  --cm-variable: #e6edf3;
+  --cm-property: #79c0ff;
+  --cm-atom: #79c0ff;
+  --cm-number: #79c0ff;
+  --cm-string: #a5d6ff;
+  --cm-comment: #8b949e;
+  --cm-operator: #ff7b72;
+  --cm-punctuation: #c9d1d9;
+  --cm-meta: #d2a8ff;
+  --cm-tag: #7ee787;
+  --cm-attribute: #79c0ff;
+  --cm-invalid: #0d1117;
+  --cm-invalid-bg: #ff7b72;
+}
+
+.cm-editor .cm-scroller {
+  position: absolute;
+  inset: 0;
+  overflow: auto;
+  cursor: text;
+}
+
+.cm-editor .cm-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  white-space: pre;
+  padding: 8px 0;
+  min-width: 100%;
+}
+
+.cm-editor .cm-line {
+  position: absolute;
+  left: 0;
+  min-width: 100%;
+  overflow: hidden;
+  padding: 0 8px 0 4px;
+  white-space: pre;
+}
+
+.cm-editor .cm-active-line {
+  background: var(--cm-active-bg);
+}
+
+.cm-editor .cm-cursor {
+  position: absolute;
+  width: 2px;
+  background: var(--cm-cursor);
+  animation: cm-blink 1.06s steps(1) infinite;
+}
+
+@keyframes cm-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.cm-editor .cm-selection {
+  position: absolute;
+  background: var(--cm-selection);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.cm-editor .cm-mark {
+  position: absolute;
+  pointer-events: none;
+  z-index: -1;
+  border-radius: 2px;
+}
+
+.cm-editor .cm-gutters {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 52px;
+  overflow: hidden;
+  background: var(--cm-gutter-bg);
+  color: var(--cm-gutter-fg);
+  border-right: 1px solid rgba(128, 128, 128, 0.2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 14px;
+  line-height: 20px;
+  padding-top: 8px;
+  z-index: 3;
+}
+
+.cm-editor .cm-gutter-line {
+  position: absolute;
+  right: 10px;
+  text-align: right;
+  white-space: pre;
+}
+
+.cm-editor .cm-fold {
+  cursor: pointer;
+  margin-right: 6px;
+  color: var(--cm-cursor);
+  font-weight: bold;
+}
+
+.cm-editor .cm-input {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0.01;
+  border: 0;
+  padding: 0;
+  outline: none;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  z-index: 5;
+}
+
+.cm-editor .cm-measure {
+  position: absolute;
+  visibility: hidden;
+  pointer-events: none;
+  white-space: pre;
+  left: -9999px;
+  top: 0;
+}
+
+.cm-editor .cm-panel {
+  position: absolute;
+  top: 6px;
+  right: 16px;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  background: var(--cm-bg);
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 6px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+  font-size: 13px;
+}
+
+.cm-editor .cm-panel.cm-panel-hidden {
+  display: none;
+}
+
+.cm-editor .cm-panel input {
+  width: 140px;
+  font-size: 13px;
+  padding: 2px 6px;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+  background: var(--cm-bg);
+  color: var(--cm-fg);
+}
+
+.cm-editor .cm-panel button {
+  font-size: 12px;
+  padding: 2px 6px;
+  cursor: pointer;
+  border: 1px solid rgba(128, 128, 128, 0.4);
+  border-radius: 4px;
+  background: var(--cm-gutter-bg);
+  color: var(--cm-fg);
+}
+
+.cm-editor .cm-search-match {
+  background: var(--cm-search);
+}
+
+.cm-editor .cm-search-current {
+  background: var(--cm-search-current);
+}
+
+.cm-editor .cm-bracket-match {
+  background: var(--cm-bracket);
+  outline: 1px solid var(--cm-bracket);
+}
+
+.cm-editor .tok-keyword {
+  color: var(--cm-keyword);
+}
+.cm-editor .tok-type {
+  color: var(--cm-type);
+}
+.cm-editor .tok-variable {
+  color: var(--cm-variable);
+}
+.cm-editor .tok-property {
+  color: var(--cm-property);
+}
+.cm-editor .tok-atom {
+  color: var(--cm-atom);
+}
+.cm-editor .tok-number {
+  color: var(--cm-number);
+}
+.cm-editor .tok-string {
+  color: var(--cm-string);
+}
+.cm-editor .tok-comment {
+  color: var(--cm-comment);
+  font-style: italic;
+}
+.cm-editor .tok-operator {
+  color: var(--cm-operator);
+}
+.cm-editor .tok-punctuation {
+  color: var(--cm-punctuation);
+}
+.cm-editor .tok-meta {
+  color: var(--cm-meta);
+}
+.cm-editor .tok-tag {
+  color: var(--cm-tag);
+}
+.cm-editor .tok-attribute {
+  color: var(--cm-attribute);
+}
+.cm-editor .tok-invalid {
+  color: var(--cm-invalid);
+  background: var(--cm-invalid-bg);
+}
