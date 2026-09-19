@@ -173,6 +173,9 @@ pub extern "wasm" fn detach(container : JsAny) -> Unit = "dom" "detach"
 pub extern "wasm" fn request_measure(editor_id : Int) -> Unit = "dom" "request_measure"
 
 ///|
+pub extern "wasm" fn notify_update(editor_id : Int) -> Unit = "dom" "notify_update"
+
+///|
 pub extern "wasm" fn log(message : JsAny) -> Unit = "dom" "log"
 
 ///|

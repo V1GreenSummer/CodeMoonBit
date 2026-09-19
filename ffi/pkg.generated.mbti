@@ -38,6 +38,8 @@ pub fn measure_text(String, String) -> Double
 
 pub fn measure_width(JsAny, JsAny) -> Double
 
+pub fn notify_update(Int) -> Unit
+
 pub fn part(JsAny, JsAny) -> JsAny
 
 pub fn push_js_string(Int, JsAny) -> Unit
