@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CodeMoonBit Demo</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <header class="toolbar">
+      <h1>CodeMoonBit</h1>
+      <div class="controls">
+        <label>
+          Language
+          <select id="language">
+            <option value="moonbit">MoonBit</option>
+            <option value="json">JSON</option>
+            <option value="javascript">JavaScript</option>
+            <option value="markdown">Markdown</option>
+            <option value="plain">Plain</option>
+          </select>
+        </label>
+        <label>
+          Theme
+          <select id="theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+          </select>
+        </label>
+        <label class="check"><input type="checkbox" id="line-numbers" checked /> Line numbers</label>
+        <label class="check"><input type="checkbox" id="line-wrapping" /> Wrap lines</label>
+        <label class="check"><input type="checkbox" id="read-only" /> Read-only</label>
+        <button id="search">Search (Mod-F)</button>
+        <button id="undo">Undo</button>
+        <button id="redo">Redo</button>
+        <button id="fold-all">Fold all</button>
+        <button id="unfold-all">Unfold all</button>
+      </div>
+    </header>
+    <main>
+      <div id="editor"></div>
+    </main>
+    <footer id="status">Ready</footer>
+    <script type="module" src="./demo.js"></script>
+  </body>
+</html>
