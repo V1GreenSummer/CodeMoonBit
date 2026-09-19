@@ -1,0 +1,79 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/view"
+
+import {
+  "codemoonbit/codemoonbit/core",
+  "codemoonbit/codemoonbit/ffi",
+  "codemoonbit/codemoonbit/state",
+}
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum Decoration {
+  Mark(@core.Range, String)
+  Line(Int, String)
+  Widget(Int, String, String)
+  GutterMarker(Int, String)
+  Fold(Int)
+}
+
+pub struct EditorView {
+  // private fields
+}
+pub fn EditorView::apply_spec(Self, @state.TransactionSpec) -> Bool
+pub fn EditorView::client_height(Self) -> Double
+pub fn EditorView::client_width(Self) -> Double
+pub fn EditorView::content_element(Self) -> @ffi.JsAny
+pub fn EditorView::destroy(Self) -> Unit
+pub fn EditorView::dispatch_focus(Self, Int) -> Unit
+pub fn EditorView::dispatch_mouse(Self, Int, Double, Double, Int) -> Bool
+pub fn EditorView::dispatch_scroll(Self, Double, Double) -> Unit
+pub fn EditorView::ensure_cursor_visible_public(Self) -> Unit
+pub fn EditorView::focus(Self) -> Unit
+pub fn EditorView::id(Self) -> Int
+pub fn EditorView::new(@ffi.JsAny, Int, @state.EditorState, ViewOptions) -> Self
+pub fn EditorView::options(Self) -> ViewOptions
+pub fn EditorView::pos_at_coords_public(Self, Double, Double) -> Int
+pub fn EditorView::render(Self) -> Unit
+pub fn EditorView::replace_range(Self, Int, Int, String) -> Unit
+pub fn EditorView::scroll_top(Self) -> Double
+pub fn EditorView::select_range(Self, Int, Int) -> Unit
+pub fn EditorView::selected_text(Self) -> @ffi.JsAny
+pub fn EditorView::set_decorations_provider(Self, (@state.EditorState) -> Array[Decoration]) -> Unit
+pub fn EditorView::set_doc(Self, String) -> Unit
+pub fn EditorView::set_line_filter(Self, (@state.EditorState, Int) -> Bool) -> Unit
+pub fn EditorView::set_options(Self, ViewOptions) -> Unit
+pub fn EditorView::set_state(Self, @state.EditorState) -> Unit
+pub fn EditorView::state(Self) -> @state.EditorState
+
+pub struct LineLayout {
+  xs : Array[Double]
+  width : Double
+}
+
+pub(all) struct ViewOptions {
+  line_numbers : Bool
+  line_wrapping : Bool
+  tab_size : Int
+  read_only : Bool
+  theme : String
+  font : String
+  line_height : Double
+  language_name : String
+}
+pub fn ViewOptions::default() -> Self
+pub fn ViewOptions::with_font(Self, String) -> Self
+pub fn ViewOptions::with_language_name(Self, String) -> Self
+pub fn ViewOptions::with_line_height(Self, Double) -> Self
+pub fn ViewOptions::with_line_numbers(Self, Bool) -> Self
+pub fn ViewOptions::with_line_wrapping(Self, Bool) -> Self
+pub fn ViewOptions::with_read_only(Self, Bool) -> Self
+pub fn ViewOptions::with_tab_size(Self, Int) -> Self
+pub fn ViewOptions::with_theme(Self, String) -> Self
+
+// Type aliases
+
+// Traits
