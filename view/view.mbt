@@ -13,6 +13,7 @@ pub struct EditorView {
   priv scroller : @ffi.JsAny
   priv content : @ffi.JsAny
   priv gutter : @ffi.JsAny
+  priv input : @ffi.JsAny
   priv editor_id : Int
   priv mut state : @state.EditorState
   priv mut options : ViewOptions
@@ -22,7 +23,7 @@ pub struct EditorView {
   priv mut decorations_provider : ((@state.EditorState) -> Array[Decoration])?
   priv mut line_filter : ((@state.EditorState, Int) -> Bool)?
   priv char_widths : Map[Int, Double]
-  priv space_width : Double
+  priv mut space_width : Double
   priv mut scroll_top : Double
   priv mut scroll_left : Double
   priv mut client_height : Double
@@ -30,6 +31,7 @@ pub struct EditorView {
   priv mut dragging : Bool
   priv mut vis_lines : Array[Int]
   priv mut vis_tops : Array[Double]
+  priv mut vis_heights : Array[Double]
   priv mut total_height : Double
 }
 
@@ -44,6 +46,7 @@ pub fn EditorView::new(
   let scroller = @ffi.part(container, @ffi.js_string("scroller"))
   let content = @ffi.part(container, @ffi.js_string("content"))
   let gutter = @ffi.part(container, @ffi.js_string("gutter"))
+  let input = @ffi.part(container, @ffi.js_string("input"))
   let language = @highlight.language_by_name(options.language_name)
   let space = @ffi.measure_text(options.font, " ")
   let view : EditorView = {
@@ -51,6 +54,7 @@ pub fn EditorView::new(
     scroller,
     content,
     gutter,
+    input,
     editor_id,
     state,
     options,
@@ -72,6 +76,7 @@ pub fn EditorView::new(
     dragging: false,
     vis_lines: [],
     vis_tops: [],
+    vis_heights: [],
     total_height: 0.0,
   }
   view.client_width = @ffi.client_width(scroller)
@@ -105,6 +110,11 @@ pub fn EditorView::set_options(
   self : EditorView,
   options : ViewOptions,
 ) -> Unit {
+  if options.font != self.options.font {
+    self.char_widths.clear()
+    let space = @ffi.measure_text(options.font, " ")
+    self.space_width = if space > 0.0 { space } else { 8.0 }
+  }
   self.options = options
   self.language = @highlight.language_by_name(options.language_name)
   self.highlighter = @highlight.HighlightCache::new(self.language)
@@ -135,6 +145,7 @@ pub fn EditorView::set_state(
   self.state = state
   self.highlighter.invalidate(0)
   self.render()
+  @ffi.notify_update(self.editor_id)
 }
 
 ///|
@@ -243,10 +254,12 @@ fn EditorView::visible_lines(self : EditorView) -> Array[Int] {
 ///|
 fn EditorView::compute_viewport(self : EditorView, lines : Array[Int]) -> Unit {
   let tops : Array[Double] = []
+  let heights : Array[Double] = []
   let mut total = 0.0
   if !self.options.line_wrapping {
     for i = 0; i < lines.length(); i = i + 1 {
       tops.push(i.to_double() * self.options.line_height)
+      heights.push(self.options.line_height)
     }
     total = lines.length().to_double() * self.options.line_height
   } else {
@@ -254,12 +267,15 @@ fn EditorView::compute_viewport(self : EditorView, lines : Array[Int]) -> Unit {
     for i = 0; i < lines.length(); i = i + 1 {
       tops.push(y)
       let layout = self.layout_line(lines[i])
-      y = y + self.line_height_of(layout)
+      let height = self.line_height_of(layout)
+      heights.push(height)
+      y = y + height
     }
     total = y
   }
   self.vis_lines = lines
   self.vis_tops = tops
+  self.vis_heights = heights
   self.total_height = total
 }
 
@@ -569,6 +585,7 @@ pub fn EditorView::render(self : EditorView) -> Unit {
   let content_html = @ffi.JsStringBuilder::new()
   let gutter_html = @ffi.JsStringBuilder::new()
   let (main_line, _) = doc.line_col(self.state.selection().main_range().head)
+  let lh = self.options.line_height
   for i = first; i <= last && i < lines.length(); i = i + 1 {
     let line = lines[i]
     let top = self.vis_tops[i]
@@ -576,34 +593,48 @@ pub fn EditorView::render(self : EditorView) -> Unit {
     let height = self.line_height_of(layout)
     let classes = self.decoration_classes(line)
     let active = if line == main_line { " cm-active-line" } else { "" }
-    content_html.push("<div class=\"cm-line")
-    content_html.push(active)
-    content_html.push(classes)
-    content_html.push("\" style=\"top:")
-    push_double(content_html, top)
-    content_html.push("px;height:")
-    push_double(content_html, height)
-    content_html.push("px\">")
     let text = doc.line(line)
     let tokens = self.highlighter.tokens_for_line(doc, line)
-    let mut pos = 0
-    for tok in tokens {
-      if tok.from > pos {
-        push_escaped(content_html, text[pos:tok.from].to_owned())
+    let starts = self.segment_starts(line)
+    for seg = 0; seg + 1 < starts.length(); seg = seg + 1 {
+      let c1 = starts[seg]
+      let c2 = starts[seg + 1]
+      let seg_top = top + lh * seg.to_double()
+      content_html.push("<div class=\"cm-line")
+      content_html.push(active)
+      content_html.push(classes)
+      content_html.push("\" style=\"top:")
+      push_double(content_html, seg_top)
+      content_html.push("px;height:")
+      push_double(content_html, lh)
+      content_html.push("px\">")
+      let mut pos = c1
+      for tok in tokens {
+        if tok.to <= c1 {
+          continue
+        }
+        if tok.from >= c2 {
+          break
+        }
+        let tf = tok.from.max(c1)
+        let tt = tok.to.min(c2)
+        if tf > pos {
+          push_escaped(content_html, text[pos:tf].to_owned())
+        }
+        content_html.push("<span class=\"")
+        content_html.push(token_class(tok.typ))
+        content_html.push("\" data-token=\"")
+        content_html.push(token_name(tok.typ))
+        content_html.push("\">")
+        push_escaped(content_html, text[tf:tt].to_owned())
+        content_html.push("</span>")
+        pos = tt
       }
-      content_html.push("<span class=\"")
-      content_html.push(token_class(tok.typ))
-      content_html.push("\" data-token=\"")
-      content_html.push(token_name(tok.typ))
-      content_html.push("\">")
-      push_escaped(content_html, text[tok.from:tok.to].to_owned())
-      content_html.push("</span>")
-      pos = tok.to
+      if pos < c2 {
+        push_escaped(content_html, text[pos:c2].to_owned())
+      }
+      content_html.push("</div>")
     }
-    if pos < text.length() {
-      push_escaped(content_html, text[pos:].to_owned())
-    }
-    content_html.push("</div>")
     if self.options.line_numbers {
       gutter_html.push("<div class=\"cm-gutter-line\" style=\"top:")
       push_double(gutter_html, top)
@@ -629,12 +660,62 @@ pub fn EditorView::render(self : EditorView) -> Unit {
     @ffi.js_string(self.total_height.to_string() + "px"),
   )
   self.vis_lines = lines
+  self.publish_cursor_position()
+}
+
+///|
+/// Keeps the hidden input element at the cursor so IME candidate windows and
+/// native text widgets appear near the caret.
+fn EditorView::publish_cursor_position(self : EditorView) -> Unit {
+  let doc = self.state.doc()
+  let pos = self.state.selection().main_range().head
+  let (line, col) = doc.line_col(pos)
+  let top = self.top_of_line(line)
+  if top < 0.0 {
+    return
+  }
+  let layout = self.layout_line(line)
+  let x = layout.xs[col.min(layout.xs.length() - 1)]
+  let lh = self.options.line_height
+  let mut y = top
+  let mut xx = x
+  if self.options.line_wrapping && self.client_width > 0.0 {
+    let seg = (x / self.client_width).floor()
+    xx = x - seg * self.client_width
+    y = top + seg * lh
+  }
+  let gutter = @ffi.client_width(self.gutter)
+  let mut left = gutter + xx - self.scroll_left
+  let mut t = y - self.scroll_top
+  if left < 0.0 {
+    left = 0.0
+  }
+  if t < 0.0 {
+    t = 0.0
+  }
+  let rounded_left = (left * 100.0).round() / 100.0
+  let rounded_top = (t * 100.0).round() / 100.0
+  @ffi.set_style(
+    self.input,
+    @ffi.js_string("left"),
+    @ffi.js_string(rounded_left.to_string() + "px"),
+  )
+  @ffi.set_style(
+    self.input,
+    @ffi.js_string("top"),
+    @ffi.js_string(rounded_top.to_string() + "px"),
+  )
+  @ffi.set_style(
+    self.input,
+    @ffi.js_string("height"),
+    @ffi.js_string(lh.to_string() + "px"),
+  )
 }
 
 ///|
 fn EditorView::first_visible_index(self : EditorView) -> Int {
   for i = 0; i < self.vis_lines.length(); i = i + 1 {
-    if self.vis_tops[i] + self.options.line_height > self.scroll_top {
+    if self.vis_tops[i] + self.vis_heights[i] > self.scroll_top {
       return i
     }
   }
@@ -652,6 +733,34 @@ fn EditorView::last_visible_index_after(self : EditorView, from : Int) -> Int {
     i = i + 1
   }
   self.vis_lines.length() - 1
+}
+
+///|
+/// Column offsets where visual segments of a line start, followed by the line
+/// length. Without wrapping this is `[0, n]`.
+fn EditorView::segment_starts(self : EditorView, line : Int) -> Array[Int] {
+  let n = self.state.doc().line_length(line)
+  if !self.options.line_wrapping || self.client_width <= 0.0 {
+    return [0, n]
+  }
+  let layout = self.layout_line(line)
+  let starts : Array[Int] = [0]
+  let mut seg_start = 0
+  let mut i = 1
+  while i <= n {
+    if i == n {
+      break
+    }
+    if layout.xs[i] - layout.xs[seg_start] >= self.client_width {
+      starts.push(i)
+      seg_start = i
+    }
+    i = i + 1
+  }
+  if starts[starts.length() - 1] != n {
+    starts.push(n)
+  }
+  starts
 }
 
 ///|
@@ -709,6 +818,7 @@ pub fn EditorView::apply_spec(
       None => ()
     }
   }
+  let previous_selection = self.state.selection()
   let tr = self.state.update(spec)
   let changes = tr.changes()
   if !changes.is_empty() {
@@ -721,6 +831,9 @@ pub fn EditorView::apply_spec(
   self.render()
   if scroll {
     self.ensure_cursor_visible()
+  }
+  if !changes.is_empty() || !self.state.selection().eq(previous_selection) {
+    @ffi.notify_update(self.editor_id)
   }
   true
 }
@@ -735,6 +848,7 @@ pub fn EditorView::set_doc(self : EditorView, text : String) -> Unit {
   self.scroll_top = 0.0
   self.scroll_left = 0.0
   self.render()
+  @ffi.notify_update(self.editor_id)
 }
 
 ///|
@@ -742,8 +856,7 @@ fn EditorView::pos_at_coords(self : EditorView, x : Double, y : Double) -> Int {
   let mut index = 0
   let mut found = false
   for i = 0; i < self.vis_lines.length(); i = i + 1 {
-    let h = self.options.line_height
-    let bottom = self.vis_tops[i] + h
+    let bottom = self.vis_tops[i] + self.vis_heights[i]
     if y < bottom {
       index = i
       found = true
@@ -757,10 +870,17 @@ fn EditorView::pos_at_coords(self : EditorView, x : Double, y : Double) -> Int {
     index = self.vis_lines.length() - 1
   }
   let line = self.vis_lines[index]
-  let mut offset_in_line = y - self.vis_tops[index]
   if self.options.line_wrapping && self.client_width > 0.0 {
-    let seg = (offset_in_line / self.options.line_height).floor().to_int()
-    offset_in_line = offset_in_line - seg.to_double() * self.options.line_height
+    let starts = self.segment_starts(line)
+    let mut seg = ((y - self.vis_tops[index]) / self.options.line_height)
+      .floor()
+      .to_int()
+    if seg < 0 {
+      seg = 0
+    }
+    if seg > starts.length() - 2 {
+      seg = starts.length() - 2
+    }
     let xx = x + seg.to_double() * self.client_width
     return self.col_at_x(line, xx)
   }
@@ -785,7 +905,41 @@ fn EditorView::col_at_x(self : EditorView, line : Int, x : Double) -> Int {
       col = col - 1
     }
   }
-  doc.pos(line, col)
+  doc.pos(line, self.snap_col(line, col, x, layout))
+}
+
+///|
+/// Snaps a column that falls inside a surrogate pair to whichever side of the
+/// pair is closer to the pointer, so selections never split a code point.
+fn EditorView::snap_col(
+  self : EditorView,
+  line : Int,
+  col : Int,
+  x : Double,
+  layout : LineLayout,
+) -> Int {
+  let doc = self.state.doc()
+  let n = doc.line_length(line)
+  if col <= 0 || col >= n {
+    return col
+  }
+  let s = doc.line(line)
+  let high = s.unsafe_get(col - 1).to_int()
+  let low = s.unsafe_get(col).to_int()
+  let in_pair = high >= 0xD800 &&
+    high <= 0xDBFF &&
+    low >= 0xDC00 &&
+    low <= 0xDFFF
+  if !in_pair {
+    return col
+  }
+  let left = layout.xs[col - 1]
+  let right = layout.xs[col + 1]
+  if x < (left + right) / 2.0 {
+    col - 1
+  } else {
+    col + 1
+  }
 }
 
 ///|
@@ -798,27 +952,28 @@ fn EditorView::word_boundaries(self : EditorView, pos : Int) -> @core.Range {
     (code >= 97 && code <= 122) ||
     code == 95
   }
-  let mut from = pos
+  let anchor = doc.snap_pos_left(pos)
+  let mut from = anchor
   while from > 0 {
-    let code = text.unsafe_get(from - 1).to_int()
-    if !is_word(code) {
+    let candidate = doc.snap_pos_left(from - 1)
+    if !is_word(text.unsafe_get(candidate).to_int()) {
       break
     }
-    from = from - 1
+    from = candidate
   }
-  let mut to = pos
+  let mut to = anchor
   while to < text.length() {
     let code = text.unsafe_get(to).to_int()
     if !is_word(code) {
       break
     }
-    to = to + 1
+    to = doc.snap_pos_right(to + 1)
   }
   if from == to {
     if to < text.length() {
-      to = to + 1
+      to = doc.snap_pos_right(to + 1)
     } else if from > 0 {
-      from = from - 1
+      from = doc.snap_pos_left(from - 1)
     }
   }
   @core.Range::new(from, to)
