@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>CodeMoonBit Browser Test</title>
+    <link rel="stylesheet" href="../demo/style.css" />
+    <style>
+      body {
+        margin: 0;
+      }
+      #editor {
+        height: 480px;
+        width: 900px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="editor"></div>
+    <script type="module">
+      import { createEditor } from "../js/browser.js";
+
+      window.errors = [];
+      window.addEventListener("error", (event) => window.errors.push(String(event.message)));
+      window.addEventListener("unhandledrejection", (event) => window.errors.push(String(event.reason)));
+
+      try {
+        const editor = await createEditor(document.getElementById("editor"), {
+          value: "fn main {\n  println(\"hi\")\n}\n",
+          language: "moonbit",
+          lineNumbers: true,
+          theme: "light",
+        });
+        window.editor = editor;
+        window.ready = true;
+      } catch (error) {
+        window.errors.push(String(error && error.stack ? error.stack : error));
+        window.ready = false;
+      }
+
+      window.tokenCount = (token) => document.querySelectorAll(`[data-token="${token}"]`).length;
+      window.count = (selector) => document.querySelectorAll(selector).length;
+    </script>
+  </body>
+</html>
