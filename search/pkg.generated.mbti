@@ -1,0 +1,92 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "codemoonbit/codemoonbit/search"
+
+import {
+  "codemoonbit/codemoonbit/core",
+  "codemoonbit/codemoonbit/state",
+}
+
+// Values
+pub fn close_search(@state.EditorState) -> @state.TransactionSpec
+
+pub fn compute_folds(@core.Text, Array[(String, String)], String?) -> Array[FoldRange]
+
+pub fn find_matches(@core.Text, SearchQuery, limit? : Int) -> Array[@core.Range]
+
+pub fn fold_all(@state.EditorState, Array[(String, String)]) -> @state.TransactionSpec?
+
+pub fn fold_at(@state.EditorState, Array[(String, String)]) -> @state.TransactionSpec?
+
+pub let fold_field : @state.StateField[FoldState]
+
+pub fn is_line_hidden(@state.EditorState, Int) -> Bool
+
+pub fn is_search_open(@state.EditorState) -> Bool
+
+pub fn matching_bracket(@core.Text, Int, Array[(String, String)]) -> @core.Range?
+
+pub fn next_visible_line(@state.EditorState, Int) -> Int
+
+pub fn open_search() -> @state.TransactionSpec
+
+pub fn prev_visible_line(@state.EditorState, Int) -> Int
+
+pub fn replace_all(@state.EditorState, String) -> @state.TransactionSpec?
+
+pub fn replace_current(@state.EditorState, String) -> @state.TransactionSpec?
+
+pub let search_field : @state.StateField[SearchState]
+
+pub fn select_next(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn select_prev(@state.EditorState) -> @state.TransactionSpec?
+
+pub let set_current_effect : @state.StateEffect[Int]
+
+pub let set_folds_effect : @state.StateEffect[Array[FoldRange]]
+
+pub let set_open_effect : @state.StateEffect[Bool]
+
+pub fn set_query(@state.EditorState, SearchQuery) -> @state.TransactionSpec
+
+pub let set_query_effect : @state.StateEffect[SearchQuery]
+
+pub let set_replace_effect : @state.StateEffect[String]
+
+pub fn unfold_all(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn unfold_at(@state.EditorState) -> @state.TransactionSpec?
+
+// Errors
+
+// Types and methods
+pub struct FoldRange {
+  from_line : Int
+  to_line : Int
+} derive(Eq)
+
+pub struct FoldState {
+  folded : Array[FoldRange]
+}
+pub fn FoldState::empty() -> Self
+
+pub struct SearchQuery {
+  text : String
+  case_sensitive : Bool
+  whole_word : Bool
+  regex : Bool
+} derive(Eq)
+pub fn SearchQuery::new(text~ : String, case_sensitive? : Bool, whole_word? : Bool, regex? : Bool) -> Self
+
+pub struct SearchState {
+  open : Bool
+  query : SearchQuery
+  matches : Array[@core.Range]
+  current : Int
+  replace_text : String
+}
+pub fn SearchState::empty() -> Self
+
+// Type aliases
+
+// Traits
