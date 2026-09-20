@@ -21,9 +21,10 @@ measurement and event plumbing.
   (`Alt-ArrowUp/Down`, `Mod-d`), selections, word/line double/triple click.
 - **History**: grouped typing/delete undos with redo, bounded by a group
   budget; non-history and remote edits safely invalidate stale undo steps.
-- **Syntax highlighting**: incremental, line-state based tokenizers for
-  MoonBit, JavaScript, JSON and Markdown, with a per-line cache and
-  invalidation on edits.
+- **Syntax highlighting**: incremental, line-state based tokenizers for about
+  50 languages (C-like family, scripting, shell/build, data/config, web,
+  MoonBit, JSON, Markdown), driven by a configurable generic tokenizer with a
+  per-line cache and invalidation on edits.
 - **Search and replace**: literal and a small regex subset (`^ $ . * + ? [] |`
   `\d \w \s \b`), match highlighting, next/previous, replace and replace all.
 - **Code folding**: bracket and indentation based folds, fold widgets, fold
