@@ -527,6 +527,10 @@ async function main() {
     await evaluate("window.editor.foldAll()");
     await waitFor('window.count(".cm-fold") > 0');
     runner.check("fold all renders fold widgets", (await evaluate('window.count(".cm-fold")')) >= 1);
+    runner.check(
+      "folded lines show an ellipsis",
+      (await evaluate('window.count(".cm-fold-ellipsis")')) >= 1,
+    );
     const gutterBefore = await evaluate('window.count(".cm-gutter-line")');
     await evaluate("window.editor.unfoldAll()");
     await sleep(100);
@@ -777,6 +781,42 @@ async function main() {
       "backspace after an emoji selection is safe",
       (await editorCall("getDoc()")) === "b",
       await editorCall("getDoc()"),
+    );
+
+    // 17b. click column accuracy (padding must not shift the hit test)
+    await editorCall("setDoc('abcdefghij')");
+    await editorCall("focus()");
+    await press("End", MOD_CTRL);
+    await sleep(120);
+    const charWidth = await evaluate(
+      'parseFloat(document.querySelector("#editor .cm-cursor").style.left) / 10',
+    );
+    const lineBox = await evaluate(`(() => {
+      const line = document.querySelector("#editor .cm-line");
+      const r = line.getBoundingClientRect();
+      return { left: r.left, paddingLeft: parseFloat(getComputedStyle(line).paddingLeft), mid: r.top + r.height / 2 };
+    })()`);
+    const exactX = lineBox.left + lineBox.paddingLeft + 3 * charWidth + charWidth / 2;
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: exactX,
+      y: lineBox.mid,
+      button: "left",
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: exactX,
+      y: lineBox.mid,
+      button: "left",
+      clickCount: 1,
+    });
+    await sleep(120);
+    const clickState = await editorCall("getState()");
+    runner.check(
+      "clicking the center of a character places the cursor there",
+      clickState.includes("sel=3:3"),
+      `${clickState} charWidth=${charWidth}`,
     );
 
     // 18. font changes re-measure character widths

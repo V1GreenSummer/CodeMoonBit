@@ -605,13 +605,33 @@ function handleKeyDown(record, event) {
   return handled;
 }
 
-function forwardDrag(record, event, kind) {
-  if (record.editorId == null || !wasmExports) return;
+// Coordinates relative to the text origin: content coordinates for y, but x is
+// measured from the line box minus its horizontal padding so a click lands on
+// the character actually under the pointer.
+function eventContentCoords(record, event) {
   const rect = record.content.getBoundingClientRect
     ? record.content.getBoundingClientRect()
     : { left: 0, top: 0 };
-  const x = num(event.clientX) - num(rect.left);
+  let x = num(event.clientX) - num(rect.left);
   const y = num(event.clientY) - num(rect.top);
+  const target = event.target;
+  if (target && typeof target.closest === "function") {
+    const line = target.closest(".cm-line");
+    if (line && typeof line.getBoundingClientRect === "function") {
+      const lineRect = line.getBoundingClientRect();
+      let padding = 0;
+      if (typeof getComputedStyle === "function") {
+        padding = parseFloat(getComputedStyle(line).paddingLeft) || 0;
+      }
+      x = num(event.clientX) - num(lineRect.left) - padding;
+    }
+  }
+  return { x, y };
+}
+
+function forwardDrag(record, event, kind) {
+  if (record.editorId == null || !wasmExports) return;
+  const { x, y } = eventContentCoords(record, event);
   try {
     requireWasm().cm_mouse(record.editorId, kind, x, y, 0, 0);
   } catch (error) {
@@ -706,11 +726,7 @@ function handleMouseDown(record, event) {
   if (record.input && typeof record.input.focus === "function") {
     record.input.focus();
   }
-  const rect = record.content.getBoundingClientRect
-    ? record.content.getBoundingClientRect()
-    : { left: 0, top: 0 };
-  const x = num(event.clientX) - num(rect.left);
-  const y = num(event.clientY) - num(rect.top);
+  const { x, y } = eventContentCoords(record, event);
   const detail = event.detail ? event.detail : 1;
   try {
     requireWasm().cm_mouse(record.editorId, 0, x, y, 0, detail);
