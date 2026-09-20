@@ -215,6 +215,33 @@ async function main() {
     cdp = new CDP(ws);
     await cdp.send("Page.enable");
     await cdp.send("Runtime.enable");
+    // Headless Chrome reports `document.hasFocus() === false` unless focus
+    // emulation is enabled, which suppresses focus/blur events on the hidden
+    // textarea. The editor's `cm-focused` state depends on those events.
+    await cdp.send("Emulation.setFocusEmulationEnabled", { enabled: true });
+
+    // Capture every uncaught exception and console error for the whole
+    // session, including after the navigation to the demo shell at the end.
+    const pageErrors = [];
+    cdp.listeners.set("Runtime.exceptionThrown", [
+      (params) => {
+        const details = params && params.exceptionDetails;
+        pageErrors.push(
+          (details && details.exception && details.exception.description) ||
+            (details && details.text) ||
+            "uncaught exception",
+        );
+      },
+    ]);
+    cdp.listeners.set("Runtime.consoleAPICalled", [
+      (params) => {
+        if (!params || params.type !== "error") return;
+        const text = (params.args || [])
+          .map((arg) => arg.value || arg.description || arg.type || "")
+          .join(" ");
+        pageErrors.push(text || "console.error");
+      },
+    ]);
 
     const loaded = cdp.once("Page.loadEventFired");
     await cdp.send("Page.navigate", { url: `${origin}/demo/browser-test.html` });
@@ -346,6 +373,54 @@ async function main() {
       (await evaluate('window.tokenCount("string")')) >= 1,
     );
 
+    // 2b. focus state, cursor visibility and the active gutter marker
+    await editorCall("focus()");
+    await waitFor('document.querySelector("#editor .cm-editor").classList.contains("cm-focused")');
+    runner.check(
+      "focusing the editor adds cm-focused",
+      await evaluate('document.querySelector("#editor .cm-editor").classList.contains("cm-focused")'),
+    );
+    runner.check(
+      "the cursor is visible while focused",
+      (await evaluate(
+        'getComputedStyle(document.querySelector("#editor .cm-cursor")).display',
+      )) !== "none",
+    );
+    runner.check(
+      "the cursor line is marked in the gutter",
+      (await evaluate('window.count(".cm-gutter-line.cm-active-gutter")')) === 1 &&
+        (await evaluate(
+          'document.querySelector("#editor .cm-active-gutter").textContent',
+        )).includes("1"),
+      await evaluate('document.querySelector("#editor .cm-active-gutter").textContent'),
+    );
+    await evaluate('document.querySelector("#editor .cm-input").blur()');
+    await waitFor('!document.querySelector("#editor .cm-editor").classList.contains("cm-focused")');
+    runner.check(
+      "blurring the editor removes cm-focused",
+      !(await evaluate('document.querySelector("#editor .cm-editor").classList.contains("cm-focused")')),
+    );
+    const blurredCursorDisplay = await evaluate(
+      '(() => { const cursor = document.querySelector("#editor .cm-cursor"); return cursor ? getComputedStyle(cursor).display : "missing"; })()',
+    );
+    runner.check(
+      "the cursor is hidden while blurred",
+      blurredCursorDisplay === "none" || blurredCursorDisplay === "missing",
+      blurredCursorDisplay,
+    );
+    await editorCall("focus()");
+    await press("ArrowDown");
+    await waitFor(
+      'document.querySelector("#editor .cm-active-gutter") && document.querySelector("#editor .cm-active-gutter").textContent === "2"',
+    );
+    runner.check(
+      "the active gutter marker follows the cursor",
+      (await evaluate(
+        'document.querySelector("#editor .cm-active-gutter").textContent',
+      )) === "2",
+    );
+    await press("ArrowUp");
+
     // 3. typing / deleting through real key events
     await editorCall("focus()");
     await press("End", MOD_CTRL);
@@ -467,6 +542,18 @@ async function main() {
       "ctrl-f opens the search panel",
       await evaluate('!document.querySelector(".cm-panel").classList.contains("cm-panel-hidden")'),
     );
+    runner.check(
+      "search buttons carry keyboard hints",
+      (await evaluate('document.querySelector(".cm-search-next").title')) === "Next match (Enter)" &&
+        (await evaluate('document.querySelector(".cm-search-prev").title')) === "Previous match (Shift-Enter)",
+    );
+    runner.check(
+      "the search counter starts empty",
+      (await evaluate('document.querySelector(".cm-search-count").textContent')) === "0 / 0" &&
+        (await evaluate(
+          'document.querySelector(".cm-search-count").classList.contains("cm-search-count-empty")',
+        )),
+    );
     await evaluate('document.querySelector(".cm-search-input").focus()');
     await cdp.send("Input.insertText", { text: "foo" });
     await waitFor('window.count(".cm-search-match") === 2');
@@ -481,12 +568,29 @@ async function main() {
       (await editorCall("getState()")).includes("sel=0:3"),
       await editorCall("getState()"),
     );
+    runner.check(
+      "the search counter shows the current match",
+      (await evaluate('document.querySelector(".cm-search-count").textContent')) === "1 / 2",
+      await evaluate('document.querySelector(".cm-search-count").textContent'),
+    );
     await evaluate('document.querySelector(".cm-search-next").click()');
     await waitFor("window.editor.getState().includes('sel=8:11')");
     runner.check(
       "search next selects the following match",
       (await editorCall("getState()")).includes("sel=8:11"),
       await editorCall("getState()"),
+    );
+    runner.check(
+      "the search counter follows next",
+      (await evaluate('document.querySelector(".cm-search-count").textContent')) === "2 / 2",
+      await evaluate('document.querySelector(".cm-search-count").textContent'),
+    );
+    await evaluate('document.querySelector(".cm-search-prev").click()');
+    await waitFor("window.editor.getState().includes('sel=0:3')");
+    runner.check(
+      "the search counter follows prev",
+      (await evaluate('document.querySelector(".cm-search-count").textContent')) === "1 / 2",
+      await evaluate('document.querySelector(".cm-search-count").textContent'),
     );
     await evaluate('document.querySelector(".cm-search-replace").focus()');
     await cdp.send("Input.insertText", { text: "moon" });
@@ -522,10 +626,71 @@ async function main() {
       `got ${await evaluate('window.count(".cm-selection")')}`,
     );
 
-    // 12. folding through the public API
+    // 12. fold discoverability and folding through the gutter markers
+    await editorCall('setOption("language", "moonbit")');
     await editorCall("setDoc('fn a() {\\n  x\\n}\\n')");
-    await evaluate("window.editor.foldAll()");
     await waitFor('window.count(".cm-fold") > 0');
+    runner.check(
+      "a foldable but unfolded line shows a marker before folding",
+      (await evaluate('window.count(".cm-fold.cm-fold-foldable")')) >= 1,
+      `markers=${await evaluate('window.count(".cm-fold")')}`,
+    );
+    runner.check(
+      "the unfolded marker uses the dim glyph",
+      (await evaluate('document.querySelector("#editor .cm-fold-foldable").textContent')) === "\u25BE",
+      await evaluate('document.querySelector("#editor .cm-fold-foldable").textContent'),
+    );
+    runner.check(
+      "no ellipsis is shown before folding",
+      (await evaluate('window.count(".cm-fold-ellipsis")')) === 0,
+    );
+    const clickMarker = async (selector) => {
+      const point = await evaluate(`(() => {
+        const marker = document.querySelector(${JSON.stringify(selector)});
+        const r = marker.getBoundingClientRect();
+        return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      })()`);
+      await cdp.send("Input.dispatchMouseEvent", {
+        type: "mousePressed",
+        x: point.x,
+        y: point.y,
+        button: "left",
+        clickCount: 1,
+      });
+      await cdp.send("Input.dispatchMouseEvent", {
+        type: "mouseReleased",
+        x: point.x,
+        y: point.y,
+        button: "left",
+        clickCount: 1,
+      });
+    };
+    await clickMarker("#editor .cm-fold-foldable");
+    await waitFor('window.count(".cm-fold-ellipsis") > 0');
+    runner.check(
+      "clicking a foldable marker folds the block",
+      (await evaluate('window.count(".cm-fold-ellipsis")')) >= 1 &&
+        (await evaluate('window.count(".cm-fold")')) === 1,
+      `${await editorCall("getState()")} markers=${await evaluate('window.count(".cm-fold")')}`,
+    );
+    runner.check(
+      "a folded line shows exactly one bright marker",
+      (await evaluate('window.count(".cm-fold.cm-fold-folded")')) === 1 &&
+        (await evaluate('document.querySelector("#editor .cm-fold-folded").textContent')) === "\u25B8",
+      await evaluate('document.querySelector("#editor .cm-fold-folded") && document.querySelector("#editor .cm-fold-folded").textContent'),
+    );
+    await clickMarker("#editor .cm-fold-folded");
+    await waitFor('window.count(".cm-fold-ellipsis") === 0');
+    runner.check(
+      "clicking the folded marker unfolds the block",
+      (await evaluate('window.count(".cm-fold-ellipsis")')) === 0 &&
+        (await evaluate('window.count(".cm-fold.cm-fold-foldable")')) >= 1,
+      `${await editorCall("getState()")}`,
+    );
+
+    // 12b. folding through the public API
+    await evaluate("window.editor.foldAll()");
+    await waitFor('window.count(".cm-fold-ellipsis") > 0');
     runner.check("fold all renders fold widgets", (await evaluate('window.count(".cm-fold")')) >= 1);
     runner.check(
       "folded lines show an ellipsis",
@@ -951,17 +1116,117 @@ async function main() {
       `settled=${settledTop} later=${laterTop}`,
     );
 
-    // 20. screenshot for visual inspection
+    // 20. light and dark screenshots for visual inspection
+    const heroDoc = [
+      "// CodeMoonBit — rendered by the MoonBit wasm module.",
+      "fn greet(name : String) -> String {",
+      '  "Hello, " + name + "!"',
+      "}",
+      "",
+      'test "greet" {',
+      '  inspect(greet("MoonBit"), content="Hello, MoonBit!")',
+      "}",
+      "",
+    ].join("\n");
+    await editorCall(`setDoc(${JSON.stringify(heroDoc)})`);
+    await editorCall('setOption("language", "moonbit")');
+    await editorCall("focus()");
+    await press("ArrowDown");
+    await editorCall('setOption("theme", "light")');
+    await sleep(150);
     const shot = await cdp.send("Page.captureScreenshot", { format: "png" });
     const shotPath = process.env.CM_SCREENSHOT || path.join(ROOT, "_build", "browser-e2e.png");
     fs.mkdirSync(path.dirname(shotPath), { recursive: true });
     fs.writeFileSync(shotPath, Buffer.from(shot.data, "base64"));
     console.log(`screenshot written to ${shotPath}`);
+    await editorCall('setOption("theme", "dark")');
+    await sleep(150);
+    const darkShot = await cdp.send("Page.captureScreenshot", { format: "png" });
+    const darkPath =
+      process.env.CM_SCREENSHOT_DARK || path.join(ROOT, "_build", "browser-e2e-dark.png");
+    fs.writeFileSync(darkPath, Buffer.from(darkShot.data, "base64"));
+    console.log(`dark screenshot written to ${darkPath}`);
+    await editorCall('setOption("theme", "light")');
+    await sleep(100);
 
     runner.check(
       "no uncaught errors during the whole session",
       (await evaluate("window.errors.length")) === 0,
       JSON.stringify(await evaluate("window.errors")),
+    );
+
+    // 21. demo application shell (status bar, theme syncing, loading state)
+    const demoLoaded = cdp.once("Page.loadEventFired");
+    await cdp.send("Page.navigate", { url: `${origin}/demo/` });
+    await demoLoaded;
+    const demoReady = await waitFor(
+      "!!window.editor && !!document.getElementById('status') && /Ln \\d+, Col \\d+/.test(document.getElementById('status').textContent)",
+      10000,
+    );
+    runner.check(
+      "the demo page boots an editor with a status readout",
+      demoReady,
+      await evaluate(
+        "document.getElementById('status') ? document.getElementById('status').textContent : 'no status element'",
+      ),
+    );
+    const demoStatus = await evaluate("document.getElementById('status').textContent");
+    runner.check(
+      "the status bar starts at Ln 1, Col 1",
+      /Ln 1, Col 1/.test(demoStatus),
+      demoStatus,
+    );
+    runner.check(
+      "the status bar shows the line count and language",
+      /\d+ lines/.test(demoStatus) && /MoonBit/.test(demoStatus),
+      demoStatus,
+    );
+    runner.check("the status bar shows the theme", /Light/.test(demoStatus), demoStatus);
+    await evaluate('window.editor.key("ArrowDown", "ArrowDown", 4)');
+    await waitFor("/2 cursors/.test(document.getElementById('status').textContent)");
+    runner.check(
+      "the status bar reports multiple cursors",
+      /2 cursors/.test(await evaluate("document.getElementById('status').textContent")),
+      await evaluate("document.getElementById('status').textContent"),
+    );
+    await evaluate('window.editor.key("a", "KeyA", 2)');
+    await waitFor("/\\d+ selected/.test(document.getElementById('status').textContent)");
+    runner.check(
+      "the status bar reports the selection size",
+      /\d+ selected/.test(await evaluate("document.getElementById('status').textContent")),
+      await evaluate("document.getElementById('status').textContent"),
+    );
+    runner.check(
+      "the demo toolbar buttons carry shortcut hints",
+      /Ctrl\/\u2318-F/.test(await evaluate('document.getElementById("search").title')) &&
+        /Ctrl\/\u2318-Z/.test(await evaluate('document.getElementById("undo").title')) &&
+        /Ctrl\/\u2318-Y/.test(await evaluate('document.getElementById("redo").title')),
+    );
+    await evaluate(`(() => {
+      const select = document.getElementById("theme");
+      select.value = "dark";
+      select.dispatchEvent(new Event("change"));
+      return true;
+    })()`);
+    await sleep(150);
+    runner.check(
+      "the demo theme select toggles the dark shell",
+      await evaluate("document.body.classList.contains('dark')"),
+    );
+    runner.check(
+      "the status bar follows the theme select",
+      /Dark/.test(await evaluate("document.getElementById('status').textContent")),
+      await evaluate("document.getElementById('status').textContent"),
+    );
+    const demoShot = await cdp.send("Page.captureScreenshot", { format: "png" });
+    fs.writeFileSync(
+      path.join(ROOT, "_build", "browser-e2e-demo.png"),
+      Buffer.from(demoShot.data, "base64"),
+    );
+    runner.check(
+      "no runtime exceptions or console errors were reported",
+      pageErrors.length === 0,
+      JSON.stringify(pageErrors.slice(0, 5)),
     );
 
     console.log(`\n${runner.failed === 0 ? "ALL BROWSER TESTS PASSED" : "BROWSER TESTS FAILED"} (${runner.passed} passed, ${runner.failed} failed)`);

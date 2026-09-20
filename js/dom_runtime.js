@@ -217,40 +217,53 @@ function buildPanel(panel) {
   const searchInput = createEl("input");
   searchInput.className = "cm-search-input";
   searchInput.setAttribute("placeholder", "Search");
+  searchInput.setAttribute("title", "Search (Ctrl/\u2318-F)");
 
   const prev = createEl("button");
   prev.className = "cm-search-prev";
   prev.setAttribute("type", "button");
+  prev.setAttribute("title", "Previous match (Shift-Enter)");
   prev.textContent = "\u2191";
 
   const next = createEl("button");
   next.className = "cm-search-next";
   next.setAttribute("type", "button");
+  next.setAttribute("title", "Next match (Enter)");
   next.textContent = "\u2193";
+
+  const count = createEl("span");
+  count.className = "cm-search-count cm-search-count-empty";
+  count.textContent = "0 / 0";
+  count.setAttribute("title", "Current match / total matches");
 
   const replaceInput = createEl("input");
   replaceInput.className = "cm-search-replace";
   replaceInput.setAttribute("placeholder", "Replace");
+  replaceInput.setAttribute("title", "Replacement text");
 
   const replaceOne = createEl("button");
   replaceOne.className = "cm-search-replace-one";
   replaceOne.setAttribute("type", "button");
+  replaceOne.setAttribute("title", "Replace current match");
   replaceOne.textContent = "Replace";
 
   const replaceAll = createEl("button");
   replaceAll.className = "cm-search-replace-all";
   replaceAll.setAttribute("type", "button");
+  replaceAll.setAttribute("title", "Replace all matches");
   replaceAll.textContent = "Replace All";
 
   const close = createEl("button");
   close.className = "cm-search-close";
   close.setAttribute("type", "button");
+  close.setAttribute("title", "Close (Escape)");
   close.textContent = "\u00d7";
 
   for (const child of [
     searchInput,
     prev,
     next,
+    count,
     replaceInput,
     replaceOne,
     replaceAll,
@@ -263,6 +276,7 @@ function buildPanel(panel) {
     searchInput,
     prev,
     next,
+    count,
     replaceInput,
     replaceOne,
     replaceAll,
@@ -416,19 +430,43 @@ function setPanelVisible(record, visible) {
   setStyleValue(record.panel, "display", visible ? "" : "none");
 }
 
+function setFocused(record, focused) {
+  if (!record || !record.root || !record.root.classList) return;
+  record.root.classList.toggle("cm-focused", !!focused);
+}
+
 export function syncSearchPanel(id) {
   const record = editors.get(id);
   if (!record) return;
   const state = callExport("cm_get_state", id);
   const open = typeof state === "string" && /(?:^|;)search=1\//.test(state);
   setPanelVisible(record, open);
+  const parts = record.panel && record.panel.__parts;
+  if (!parts || !parts.count) return;
+  let total = 0;
+  let current = 0;
+  const parsed =
+    typeof state === "string"
+      ? state.match(/(?:^|;)search=(\d+)\/(\d+)\/(\d+)/)
+      : null;
+  if (parsed) {
+    total = Number(parsed[2]);
+    current = Number(parsed[3]);
+  }
+  if (total > 0 && current >= 0 && current < total) {
+    parts.count.textContent = `${current + 1} / ${total}`;
+    if (parts.count.classList) parts.count.classList.remove("cm-search-count-empty");
+  } else {
+    parts.count.textContent = "0 / 0";
+    if (parts.count.classList) parts.count.classList.add("cm-search-count-empty");
+  }
 }
 
 export function showSearchPanel(id) {
   const record = editors.get(id);
   callExport("cm_search_open", id);
   if (!record) return;
-  setPanelVisible(record, true);
+  syncSearchPanel(id);
   const parts = record.panel.__parts;
   if (parts && parts.searchInput && typeof parts.searchInput.focus === "function") {
     parts.searchInput.focus();
@@ -901,10 +939,12 @@ function installListeners(record) {
   });
 
   addListener(record, record.input, "focus", () => {
+    setFocused(record, true);
     callExport("cm_focus_event", record.editorId, 1);
   });
 
   addListener(record, record.input, "blur", () => {
+    setFocused(record, false);
     callExport("cm_focus_event", record.editorId, 0);
   });
 
@@ -1137,6 +1177,7 @@ export function createDomImports() {
       // Rendered measurements happen lazily inside `set_html`; nothing to do.
     },
     notify_update(editorId) {
+      syncSearchPanel(editorId);
       notifyUpdate(editorId);
     },
     log(message) {
@@ -1308,6 +1349,7 @@ export const __testForward = {
   focus(id, focused) {
     const record = editors.get(id);
     if (!record) return;
+    setFocused(record, focused);
     callExport("cm_focus_event", id, focused ? 1 : 0);
   },
 };

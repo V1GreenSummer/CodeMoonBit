@@ -10,6 +10,7 @@ js/browser.js       `createEditor(container, options)` public browser API
 js/codemoonbit.css  distributable editor stylesheet scoped to `.cm-editor`
 js/shim_dom.js      minimal fake DOM + wasm loader for Node
 js/e2e.mjs          Node end-to-end tests (`node js/e2e.mjs`)
+js/browser_e2e.mjs  real-browser tests over the DevTools protocol
 ```
 
 ## Build & test
@@ -91,10 +92,23 @@ registered by the real DOM listeners (via `__testForward` from
   height/minHeight so the scroller can scroll.
 - **Search panel.** `cm_search_open` (the `openSearch()` method, or `Ctrl-f`
   handled by the MoonBit keymap) shows `.cm-panel`; the panel's controls call
-  `cm_search_query/next/prev/replace/replace_all/close`. Visibility is synced
-  from `cm_get_state` (`search=1/...`) after forwarded events, so `Ctrl-f`
-  also opens the panel. Opening focuses the search input; closing focuses
-  the textarea.
+  `cm_search_query/next/prev/replace/replace_all/close`. Visibility and the
+  `.cm-search-count` readout (`` `${current + 1} / ${total}` ``, or `0 / 0`
+  with `.cm-search-count-empty`) are synced from `cm_get_state`
+  (`search=1/<total>/<current>`) after forwarded events and after every
+  `notify_update`, so `Ctrl-f` also opens the panel. The prev/next/replace
+  buttons carry shortcut `title` hints. Opening focuses the search input;
+  closing focuses the textarea.
+- **Focus state.** The textarea's `focus`/`blur` events toggle `cm-focused` on
+  the `.cm-editor` root (and forward to `cm_focus_event`), which the
+  stylesheet uses to show the focus ring and to hide the cursor while
+  unfocused.
+- **Gutter markers.** The view renders one `.cm-fold` span per foldable line
+  in the gutter: `.cm-fold.cm-fold-foldable` (`▾`, dim) when the block can be
+  folded and `.cm-fold.cm-fold-folded` (`▸`, bright) when it is folded (plus
+  the inline `.cm-fold-ellipsis`). Both carry `data-line`, and a click is
+  turned into `cm_fold_click` by the runtime. The cursor line's gutter number
+  gets `.cm-active-gutter`.
 - **Shift-click** cannot extend the selection: `cm_mouse` receives no
   modifier bits and the MoonBit view always creates a fresh selection on
   mousedown. Double/triple click work through `e.detail`.

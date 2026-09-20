@@ -15,11 +15,19 @@
   --cm-fg: #24292f;
   --cm-gutter-bg: #f6f8fa;
   --cm-gutter-fg: #8c959f;
+  --cm-gutter-active-fg: #0550ae;
   --cm-active-bg: #f0f3f6;
+  --cm-active-gutter-bg: rgba(9, 105, 218, 0.08);
   --cm-selection: rgba(84, 174, 255, 0.35);
+  --cm-selection-blur: rgba(84, 174, 255, 0.16);
   --cm-cursor: #0969da;
+  --cm-focus-ring: rgba(9, 105, 218, 0.45);
+  --cm-scrollbar: rgba(110, 119, 129, 0.45);
+  --cm-fold: #8c959f;
+  --cm-fold-active: #0969da;
   --cm-search: rgba(255, 196, 0, 0.4);
   --cm-search-current: rgba(255, 140, 0, 0.6);
+  --cm-search-empty: #cf222e;
   --cm-bracket: rgba(0, 150, 255, 0.35);
   --cm-keyword: #cf222e;
   --cm-type: #953800;
@@ -54,11 +62,19 @@
   --cm-fg: #e6edf3;
   --cm-gutter-bg: #010409;
   --cm-gutter-fg: #6e7681;
+  --cm-gutter-active-fg: #79c0ff;
   --cm-active-bg: #161b22;
+  --cm-active-gutter-bg: rgba(88, 166, 255, 0.12);
   --cm-selection: rgba(56, 139, 253, 0.4);
+  --cm-selection-blur: rgba(56, 139, 253, 0.2);
   --cm-cursor: #58a6ff;
+  --cm-focus-ring: rgba(88, 166, 255, 0.5);
+  --cm-scrollbar: rgba(139, 148, 158, 0.5);
+  --cm-fold: #6e7681;
+  --cm-fold-active: #58a6ff;
   --cm-search: rgba(255, 196, 0, 0.4);
   --cm-search-current: rgba(255, 140, 0, 0.6);
+  --cm-search-empty: #ff7b72;
   --cm-bracket: rgba(0, 150, 255, 0.35);
   --cm-keyword: #ff7b72;
   --cm-type: #ffa657;
@@ -77,16 +93,59 @@
   --cm-invalid-bg: #ff7b72;
 }
 
+.cm-editor,
+.cm-editor * {
+  box-sizing: border-box;
+}
+
+/*
+ * Focus ring drawn as an overlay so showing or hiding it never changes the
+ * layout (or the measured client size) of the editor.
+ */
+.cm-editor::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  border: 1px solid transparent;
+  border-radius: inherit;
+  transition: border-color 140ms ease;
+}
+
+.cm-editor.cm-focused::after {
+  border-color: var(--cm-focus-ring);
+}
+
 .cm-editor .cm-scroller {
   position: absolute;
   inset: 0;
   overflow: auto;
   cursor: text;
+  scrollbar-width: thin;
+  scrollbar-color: var(--cm-scrollbar) transparent;
 }
 
-.cm-editor,
-.cm-editor * {
-  box-sizing: border-box;
+.cm-editor .cm-scroller::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-track,
+.cm-editor .cm-scroller::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb {
+  background: var(--cm-scrollbar);
+  background-clip: content-box;
+  border: 2px solid transparent;
+  border-radius: 8px;
+}
+
+.cm-editor .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--cm-focus-ring);
+  background-clip: content-box;
 }
 
 .cm-editor .cm-content {
@@ -96,6 +155,13 @@
   white-space: pre;
   padding: 8px 0;
   min-width: 100%;
+}
+
+/* The editor paints its own selection overlay; hide the native one. */
+.cm-editor .cm-content::selection,
+.cm-editor .cm-content *::selection {
+  background: transparent;
+  color: inherit;
 }
 
 .cm-editor .cm-line {
@@ -111,11 +177,19 @@
   background: var(--cm-active-bg);
 }
 
+.cm-editor .cm-content span[data-token] {
+  transition: color 120ms, background-color 120ms;
+}
+
 .cm-editor .cm-cursor {
   position: absolute;
   width: 2px;
   background: var(--cm-cursor);
   animation: cm-blink 1.06s steps(1) infinite;
+}
+
+.cm-editor:not(.cm-focused) .cm-cursor {
+  display: none;
 }
 
 @keyframes cm-blink {
@@ -132,13 +206,18 @@
 .cm-editor .cm-selection {
   position: absolute;
   background: var(--cm-selection);
+  border-radius: 2px;
   pointer-events: none;
+}
+
+.cm-editor:not(.cm-focused) .cm-selection {
+  background: var(--cm-selection-blur);
 }
 
 .cm-editor .cm-mark {
   position: absolute;
   pointer-events: none;
-  border-radius: 2px;
+  border-radius: 3px;
 }
 
 .cm-editor .cm-gutters {
@@ -160,9 +239,16 @@
 
 .cm-editor .cm-gutter-line {
   position: absolute;
-  right: 10px;
+  left: 0;
+  right: 0;
+  padding-right: 10px;
   text-align: right;
   white-space: pre;
+}
+
+.cm-editor .cm-gutter-line.cm-active-gutter {
+  color: var(--cm-gutter-active-fg);
+  background: var(--cm-active-gutter-bg);
 }
 
 .cm-editor .cm-fold-ellipsis {
@@ -173,8 +259,20 @@
 .cm-editor .cm-fold {
   cursor: pointer;
   margin-right: 6px;
-  color: var(--cm-cursor);
+  color: var(--cm-fold);
   font-weight: bold;
+  opacity: 0.55;
+  transition: color 120ms, opacity 120ms;
+}
+
+.cm-editor .cm-fold:hover,
+.cm-editor .cm-gutters:hover .cm-fold {
+  opacity: 1;
+}
+
+.cm-editor .cm-fold.cm-fold-folded {
+  color: var(--cm-fold-active);
+  opacity: 1;
 }
 
 .cm-editor .cm-input {
@@ -232,6 +330,12 @@
   color: var(--cm-fg);
 }
 
+.cm-editor .cm-panel input:focus {
+  outline: none;
+  border-color: var(--cm-focus-ring);
+  box-shadow: 0 0 0 2px var(--cm-selection-blur);
+}
+
 .cm-editor .cm-panel button {
   font-size: 12px;
   padding: 2px 6px;
@@ -240,6 +344,28 @@
   border-radius: 4px;
   background: var(--cm-gutter-bg);
   color: var(--cm-fg);
+}
+
+.cm-editor .cm-panel button:hover {
+  border-color: var(--cm-focus-ring);
+}
+
+.cm-editor .cm-panel button:active {
+  transform: translateY(1px);
+}
+
+.cm-editor .cm-search-count {
+  min-width: 34px;
+  padding: 0 2px;
+  text-align: center;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--cm-gutter-fg);
+}
+
+.cm-editor .cm-search-count.cm-search-count-empty {
+  color: var(--cm-search-empty);
+  opacity: 0.85;
 }
 
 .cm-editor .cm-search-match {
