@@ -151,10 +151,10 @@
 .cm-editor .cm-content {
   position: absolute;
   top: 0;
-  left: 0;
+  left: 4px;
   white-space: pre;
   padding: 8px 0;
-  min-width: 100%;
+  min-width: calc(100% - 4px);
 }
 
 /* The editor paints its own selection overlay; hide the native one. */
@@ -169,7 +169,7 @@
   left: 0;
   min-width: 100%;
   overflow: hidden;
-  padding: 0 8px 0 4px;
+  padding: 0 8px 0 0;
   white-space: pre;
 }
 

@@ -332,7 +332,7 @@ function createScaffold(container, editorId) {
   setStyles(content, {
     position: "absolute",
     top: "0",
-    left: "0",
+    left: "4px",
     whiteSpace: "pre",
   });
   content.__cmRole = "content";

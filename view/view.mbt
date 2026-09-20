@@ -709,7 +709,7 @@ fn EditorView::publish_cursor_position(self : EditorView) -> Unit {
     xx = x - seg * self.client_width
     y = top + seg * lh
   }
-  let gutter = @ffi.client_width(self.gutter)
+  let gutter = @ffi.client_width(self.gutter) + 4.0
   let mut left = gutter + xx - self.scroll_left
   let mut t = y - self.scroll_top
   if left < 0.0 {
