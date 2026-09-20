@@ -26,13 +26,16 @@ measurement and event plumbing.
   MoonBit, JSON, Markdown), driven by a configurable generic tokenizer with a
   per-line cache and invalidation on edits.
 - **Search and replace**: literal and a small regex subset (`^ $ . * + ? [] |`
-  `\d \w \s \b`), match highlighting, next/previous, replace and replace all.
-- **Code folding**: bracket and indentation based folds, fold widgets, fold
-  all/unfold all.
+  `\d \w \s \b`), match highlighting, next/previous, replace and replace all,
+  a current/total match counter and keyboard hints in the panel.
+- **Code folding**: bracket and indentation based folds, foldable-line gutter
+  markers (`▾` unfolded, `▸` folded with an inline `…` ellipsis), clicking the
+  gutter to fold/unfold, fold all/unfold all.
 - **Rendering**: viewport-based virtual rendering with full-document scroll
-  height, gutter line numbers, active
-  line, selections, cursors, bracket matching, optional soft wrapping,
-  light/dark themes, read-only mode.
+  height, gutter line numbers, active line plus active gutter marker, focus
+  ring and focus-aware cursor/selection colors, selections, cursors, bracket
+  matching, themed thin scrollbars, optional soft wrapping, light/dark themes,
+  read-only mode.
 - **Input**: extensible keymap facet with a CodeMirror-like default keymap,
   platform-aware `Mod` bindings, configurable indentation, full IME
   composition sessions (one undo per composition), clipboard
@@ -60,10 +63,10 @@ measurement and event plumbing.
 
 ```sh
 moon check --target wasm-gc          # type check
-moon test --target wasm-gc           # 115 unit tests (pure packages)
+moon test --target wasm-gc           # 133 unit tests (pure packages)
 moon build --target wasm-gc          # _build/wasm-gc/debug/build/main/main.wasm
 node js/e2e.mjs                      # 39 end-to-end tests through a DOM shim
-node js/browser_e2e.mjs              # 48 real-browser tests (Chromium over CDP)
+node js/browser_e2e.mjs              # 80 real-browser tests (Chromium over CDP)
 moon fmt && moon info
 ```
 
