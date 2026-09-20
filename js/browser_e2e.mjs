@@ -984,6 +984,69 @@ async function main() {
       `${clickState} charWidth=${charWidth}`,
     );
 
+    // 17c. the caret must sit after the last character, not on top of it
+    await editorCall('setOption("language", "plain")');
+    await editorCall("setDoc('hello')");
+    await editorCall("focus()");
+    await press("End", MOD_CTRL);
+    await sleep(150);
+    const caretAlignment = await evaluate(`(() => {
+      const line = document.querySelector("#editor .cm-line");
+      let node = line.firstChild;
+      while (node && node.nodeType !== 3) node = node.firstChild;
+      if (!node) return { ok: false, reason: "no text node" };
+      const range = document.createRange();
+      range.setStart(node, node.length - 1);
+      range.setEnd(node, node.length);
+      const charRect = range.getBoundingClientRect();
+      const cursor = document.querySelector("#editor .cm-cursor");
+      const cursorRect = cursor.getBoundingClientRect();
+      return { charRight: charRect.right, cursorLeft: cursorRect.left, diff: Math.abs(charRect.right - cursorRect.left) };
+    })()`);
+    runner.check(
+      "the caret is drawn after the last character, not over it",
+      caretAlignment.ok !== false && caretAlignment.diff <= 2,
+      JSON.stringify(caretAlignment),
+    );
+
+    // 17d. clicking the empty area below the text still places the caret
+    await editorCall("setDoc('abc')");
+    await editorCall("focus()");
+    await sleep(120);
+    const emptySpot = await evaluate(`(() => {
+      const lines = document.querySelectorAll("#editor .cm-line");
+      const last = lines[lines.length - 1].getBoundingClientRect();
+      const viewportBottom = window.innerHeight - 10;
+      return {
+        x: last.left + 100,
+        y: Math.min(viewportBottom, last.bottom + 40),
+      };
+    })()`);
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: emptySpot.x,
+      y: emptySpot.y,
+      button: "left",
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: emptySpot.x,
+      y: emptySpot.y,
+      button: "left",
+      clickCount: 1,
+    });
+    await sleep(120);
+    const emptyState = await editorCall("getState()");
+    const emptyFocused = await evaluate(
+      'document.activeElement === document.querySelector("#editor .cm-input")',
+    );
+    runner.check(
+      "clicking below the text focuses the editor and moves the caret to the end",
+      emptyFocused && emptyState.includes("sel=3:3"),
+      `${emptyState} focused=${emptyFocused}`,
+    );
+
     // 18. font changes re-measure character widths
     await editorCall("setDoc('mmmm')");
     await editorCall("focus()");
@@ -1229,6 +1292,23 @@ async function main() {
       "the status bar follows the theme select",
       /Dark/.test(await evaluate("document.getElementById('status').textContent")),
       await evaluate("document.getElementById('status').textContent"),
+    );
+    const shortHeight = await evaluate("document.getElementById('editor').clientHeight");
+    await evaluate(
+      "window.editor.setDoc(Array.from({ length: 400 }, (_, i) => 'line ' + i).join('\\n'))",
+    );
+    await sleep(250);
+    const longHeight = await evaluate("document.getElementById('editor').clientHeight");
+    await evaluate("window.editor.setDoc('fn main { }')");
+    await sleep(250);
+    const shrinkHeight = await evaluate("document.getElementById('editor').clientHeight");
+    const maxHeight = await evaluate("Math.max(240, window.innerHeight * 0.7)");
+    runner.check(
+      "the demo editor shrinks to short documents and caps long ones",
+      shortHeight < maxHeight - 20 &&
+        Math.abs(longHeight - maxHeight) <= 2 &&
+        shrinkHeight < maxHeight - 20,
+      `short=${shortHeight} long=${longHeight} shrink=${shrinkHeight} max=${maxHeight}`,
     );
     const demoShot = await cdp.send("Page.captureScreenshot", { format: "png" });
     fs.writeFileSync(
