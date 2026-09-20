@@ -1072,6 +1072,8 @@ pub fn EditorView::dispatch_mouse(
     }
     1 => {
       if self.dragging {
+        self.auto_scroll_drag(y, x)
+        let pos = self.pos_at_coords(x, y)
         let anchor = self.state.selection().main_range().anchor
         let spec = @state.TransactionSpec::new(
           changes=@core.ChangeSet::empty(),
@@ -1086,6 +1088,48 @@ pub fn EditorView::dispatch_mouse(
       true
     }
     _ => false
+  }
+}
+
+///|
+/// Scrolls the viewport while a drag is in progress and the pointer has left
+/// the visible area, so selections can extend past the first screen.
+fn EditorView::auto_scroll_drag(
+  self : EditorView,
+  y : Double,
+  x : Double,
+) -> Unit {
+  let lh = self.options.line_height
+  let mut new_top = self.scroll_top
+  let viewport_y = y - self.scroll_top
+  if viewport_y < 0.0 {
+    let step = viewport_y.max(-3.0 * lh)
+    new_top = self.scroll_top + step
+  } else if viewport_y > self.client_height {
+    let step = (viewport_y - self.client_height).min(3.0 * lh)
+    new_top = self.scroll_top + step
+  }
+  if new_top < 0.0 {
+    new_top = 0.0
+  }
+  let max_top = self.total_height - self.client_height
+  if max_top > 0.0 && new_top > max_top {
+    new_top = max_top
+  }
+  let mut new_left = self.scroll_left
+  if x < self.scroll_left {
+    new_left = x
+  } else if x > self.scroll_left + self.client_width {
+    new_left = x - self.client_width
+  }
+  if new_left < 0.0 {
+    new_left = 0.0
+  }
+  if new_top != self.scroll_top || new_left != self.scroll_left {
+    self.scroll_top = new_top
+    self.scroll_left = new_left
+    @ffi.set_scroll(self.scroller, new_top, new_left)
+    self.render()
   }
 }
 
