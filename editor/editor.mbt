@@ -117,16 +117,32 @@ fn Editor::decorations(
       result.push(@view.Decoration::Mark(search.matches[i], cls))
     }
   }
+  let language = language_of(self.options)
+  let folded_lines : Array[Bool] = Array::make(state.line_count(), false)
   if state.has_field(@search.fold_field.id()) {
     let folds = state.field(@search.fold_field)
     for f in folds.folded {
       result.push(@view.Decoration::Fold(f.from_line))
+      if f.from_line >= 0 && f.from_line < folded_lines.length() {
+        folded_lines[f.from_line] = true
+      }
     }
   }
-  let language = language_of(self.options)
+  let doc = state.doc()
+  if doc.lines() <= 20000 {
+    for
+      fold in @search.compute_folds(
+        doc,
+        language.brackets(),
+        language.line_comment(),
+      ) {
+      if !folded_lines[fold.from_line] {
+        result.push(@view.Decoration::Foldable(fold.from_line))
+      }
+    }
+  }
   let brackets = language.brackets()
   if brackets.length() > 0 {
-    let doc = state.doc()
     let pos = state.selection().main_range().head
     match @search.matching_bracket(doc, pos, brackets) {
       Some(range) =>
