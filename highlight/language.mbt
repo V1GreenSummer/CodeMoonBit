@@ -78,15 +78,3 @@ pub fn Language::line_comment(self : Language) -> String? {
 pub fn Language::block_comment(self : Language) -> (String, String)? {
   self.comment_tokens
 }
-
-///|
-/// Looks up a language by name; unknown names fall back to `plain`.
-pub fn language_by_name(name : String) -> Language {
-  match name {
-    "json" => json_language()
-    "markdown" => markdown_language()
-    "moonbit" => moonbit_language()
-    "javascript" | "js" => javascript_language()
-    _ => plain_language()
-  }
-}

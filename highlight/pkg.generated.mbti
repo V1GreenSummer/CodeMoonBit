@@ -7,17 +7,111 @@ import {
 }
 
 // Values
+pub fn c_language() -> Language
+
+pub fn clojure_language() -> Language
+
+pub fn cpp_language() -> Language
+
+pub fn csharp_language() -> Language
+
+pub fn css_language() -> Language
+
+pub fn dart_language() -> Language
+
+pub fn diff_language() -> Language
+
+pub fn dockerfile_language() -> Language
+
+pub fn elixir_language() -> Language
+
+pub fn erlang_language() -> Language
+
+pub fn go_language() -> Language
+
+pub fn graphql_language() -> Language
+
+pub fn groovy_language() -> Language
+
+pub fn haskell_language() -> Language
+
+pub fn hcl_language() -> Language
+
+pub fn html_language() -> Language
+
+pub fn ini_language() -> Language
+
+pub fn java_language() -> Language
+
 pub fn javascript_language() -> Language
 
 pub fn json_language() -> Language
 
+pub fn julia_language() -> Language
+
+pub fn kotlin_language() -> Language
+
 pub fn language_by_name(String) -> Language
+
+pub fn language_names() -> Array[String]
+
+pub fn latex_language() -> Language
+
+pub fn less_language() -> Language
+
+pub fn lisp_language() -> Language
+
+pub fn lua_language() -> Language
+
+pub fn makefile_language() -> Language
 
 pub fn markdown_language() -> Language
 
 pub fn moonbit_language() -> Language
 
+pub fn nix_language() -> Language
+
+pub fn ocaml_language() -> Language
+
+pub fn perl_language() -> Language
+
+pub fn php_language() -> Language
+
 pub fn plain_language() -> Language
+
+pub fn powershell_language() -> Language
+
+pub fn protobuf_language() -> Language
+
+pub fn python_language() -> Language
+
+pub fn r_language() -> Language
+
+pub fn ruby_language() -> Language
+
+pub fn rust_language() -> Language
+
+pub fn scala_language() -> Language
+
+pub fn scss_language() -> Language
+
+pub fn shell_language() -> Language
+
+pub fn solidity_language() -> Language
+
+pub fn sql_language() -> Language
+
+pub fn swift_language() -> Language
+
+pub fn toml_language() -> Language
+
+pub fn typescript_language() -> Language
+
+pub fn vue_language() -> Language
+
+pub fn xml_language() -> Language
+
+pub fn yaml_language() -> Language
 
 // Errors
 
