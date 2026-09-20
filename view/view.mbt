@@ -633,6 +633,9 @@ pub fn EditorView::render(self : EditorView) -> Unit {
       if pos < c2 {
         push_escaped(content_html, text[pos:c2].to_owned())
       }
+      if seg + 2 == starts.length() && self.fold_widget(line) {
+        content_html.push("<span class=\"cm-fold-ellipsis\">\u{2026}</span>")
+      }
       content_html.push("</div>")
     }
     if self.options.line_numbers {
