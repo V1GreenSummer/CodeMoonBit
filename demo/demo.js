@@ -12,10 +12,15 @@ test "greet" {
 }
 `;
 
+const prefersDark =
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-color-scheme: dark)").matches;
+
 const state = {
   value: INITIAL,
   language: "moonbit",
-  theme: "light",
+  theme: prefersDark ? "dark" : "light",
   lineNumbers: true,
   lineWrapping: false,
   readOnly: false,
@@ -93,8 +98,11 @@ function refreshStatus() {
 }
 
 function applyTheme(theme) {
-  document.body.classList.toggle("dark", theme === "dark");
+  const dark = theme === "dark";
+  document.body.classList.toggle("dark", dark);
+  document.documentElement.classList.toggle("dark", dark);
   document.body.dataset.theme = theme;
+  themeSelect.value = theme;
 }
 
 applyTheme(state.theme);

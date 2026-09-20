@@ -1213,6 +1213,18 @@ async function main() {
       "the demo theme select toggles the dark shell",
       await evaluate("document.body.classList.contains('dark')"),
     );
+    const fullPageDark = await evaluate(`(() => {
+      const bg = getComputedStyle(document.documentElement).backgroundColor;
+      const m = bg.match(/rgba?\\((\\d+),\\s*(\\d+),\\s*(\\d+)/);
+      if (!m) return { bg, dark: false };
+      const [r, g, b] = [Number(m[1]), Number(m[2]), Number(m[3])];
+      return { bg, dark: r < 40 && g < 40 && b < 40 };
+    })()`);
+    runner.check(
+      "the whole page canvas is dark, not just the editor",
+      fullPageDark.dark && (await evaluate("document.documentElement.classList.contains('dark')")),
+      JSON.stringify(fullPageDark),
+    );
     runner.check(
       "the status bar follows the theme select",
       /Dark/.test(await evaluate("document.getElementById('status').textContent")),

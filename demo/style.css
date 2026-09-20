@@ -16,6 +16,7 @@
   --shell-control-height: 28px;
 }
 
+:root.dark,
 body.dark {
   --shell-bg: #010409;
   --shell-fg: #e6edf3;
@@ -31,6 +32,15 @@ body.dark {
   --shell-accent: #58a6ff;
   --shell-focus-ring: rgba(88, 166, 255, 0.4);
   --shell-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  background: var(--shell-bg);
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 * {
