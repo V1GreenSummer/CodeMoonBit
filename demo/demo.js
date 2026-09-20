@@ -24,6 +24,7 @@ const state = {
 const status = document.getElementById("status");
 const container = document.getElementById("editor");
 const editor = await createEditor(container, { ...state });
+window.editor = editor;
 
 function refreshStatus() {
   const info = editor.getState();
@@ -76,3 +77,4 @@ document.getElementById("unfold-all").addEventListener("click", () => {
 
 container.addEventListener("keyup", refreshStatus);
 container.addEventListener("mouseup", refreshStatus);
+editor.onUpdate(refreshStatus);
