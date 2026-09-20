@@ -84,6 +84,11 @@
   cursor: text;
 }
 
+.cm-editor,
+.cm-editor * {
+  box-sizing: border-box;
+}
+
 .cm-editor .cm-content {
   position: absolute;
   top: 0;
@@ -128,13 +133,11 @@
   position: absolute;
   background: var(--cm-selection);
   pointer-events: none;
-  z-index: -1;
 }
 
 .cm-editor .cm-mark {
   position: absolute;
   pointer-events: none;
-  z-index: -1;
   border-radius: 2px;
 }
 

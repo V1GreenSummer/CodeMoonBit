@@ -802,7 +802,116 @@ async function main() {
     );
     await sleep(100);
 
-    // 19. screenshot for visual inspection
+    // 19. drag selection stays visible and auto-scrolls past the viewport
+    await editorCall("setDoc('alpha bravo charlie delta echo')");
+    await editorCall("focus()");
+    await sleep(150);
+    const dragRect = await evaluate(`(() => {
+      const line = document.querySelector("#editor .cm-line");
+      const r = line.getBoundingClientRect();
+      return { left: r.left, mid: r.top + r.height / 2 };
+    })()`);
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: dragRect.left + 4 + 2 * 8.4,
+      y: dragRect.mid,
+      button: "left",
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: dragRect.left + 4 + 20 * 8.4,
+      y: dragRect.mid,
+      button: "left",
+      buttons: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: dragRect.left + 4 + 20 * 8.4,
+      y: dragRect.mid,
+      button: "left",
+      clickCount: 1,
+    });
+    await sleep(100);
+    const dragOverlay = await evaluate(`(() => {
+      const el = document.querySelector("#editor .cm-selection");
+      if (!el) return null;
+      const cs = getComputedStyle(el);
+      const r = el.getBoundingClientRect();
+      const line = document.querySelector("#editor .cm-line");
+      return {
+        zIndex: cs.zIndex,
+        background: cs.backgroundColor,
+        width: r.width,
+        lineIndex: Array.from(document.querySelector("#editor .cm-content").children).indexOf(el),
+        lineOrder: Array.from(document.querySelector("#editor .cm-content").children).indexOf(line),
+      };
+    })()`);
+    runner.check(
+      "drag selection is painted above the line background",
+      dragOverlay &&
+        dragOverlay.zIndex === "auto" &&
+        !dragOverlay.background.includes("rgba(0, 0, 0, 0)") &&
+        dragOverlay.width > 50 &&
+        dragOverlay.lineIndex > dragOverlay.lineOrder,
+      JSON.stringify(dragOverlay),
+    );
+
+    await editorCall("setDoc(Array.from({ length: 300 }, (_, i) => 'line ' + i).join('\\n'))");
+    await editorCall("focus()");
+    await sleep(200);
+    const viewRect = await evaluate(`(() => {
+      const r = document.getElementById("editor").getBoundingClientRect();
+      return { left: r.left, top: r.top, bottom: r.bottom };
+    })()`);
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x: viewRect.left + 60,
+      y: viewRect.top + 20,
+      button: "left",
+      clickCount: 1,
+    });
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x: viewRect.left + 80,
+      y: viewRect.bottom + 80,
+      button: "left",
+      buttons: 1,
+    });
+    await sleep(400);
+    const autoScroll = await evaluate(`(() => {
+      const scroller = document.querySelector("#editor .cm-scroller");
+      return { scrollTop: scroller.scrollTop };
+    })()`);
+    const autoState = await editorCall("getState()");
+    const autoEnd = Number((autoState.match(/sel=\d+:(\d+)/) || [0, "0"])[1]);
+    runner.check(
+      "holding the drag below the viewport keeps scrolling",
+      autoScroll.scrollTop > 150 && autoEnd > 200,
+      `scrollTop=${autoScroll.scrollTop} selectionEnd=${autoEnd}`,
+    );
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x: viewRect.left + 80,
+      y: viewRect.bottom + 80,
+      button: "left",
+      clickCount: 1,
+    });
+    await sleep(150);
+    const settledTop = await evaluate(
+      'document.querySelector("#editor .cm-scroller").scrollTop',
+    );
+    await sleep(250);
+    const laterTop = await evaluate(
+      'document.querySelector("#editor .cm-scroller").scrollTop',
+    );
+    runner.check(
+      "auto-scroll stops on mouse release",
+      settledTop === laterTop,
+      `settled=${settledTop} later=${laterTop}`,
+    );
+
+    // 20. screenshot for visual inspection
     const shot = await cdp.send("Page.captureScreenshot", { format: "png" });
     const shotPath = process.env.CM_SCREENSHOT || path.join(ROOT, "_build", "browser-e2e.png");
     fs.mkdirSync(path.dirname(shotPath), { recursive: true });

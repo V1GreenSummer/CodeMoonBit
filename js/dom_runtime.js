@@ -620,6 +620,7 @@ function forwardDrag(record, event, kind) {
 }
 
 function removeWindowDrag(record) {
+  stopDragAutoScroll(record);
   if (!record.windowDragInstalled) return;
   const win = globalThis.window || globalThis;
   if (typeof win.removeEventListener === "function") {
@@ -635,18 +636,52 @@ function installWindowDrag(record) {
   if (typeof win.addEventListener !== "function") return;
   record.onWindowMove = (event) => {
     if (!record.dragging) return;
+    record.lastDragEvent = event;
     forwardDrag(record, event, 1);
     preventEvent(event);
   };
   record.onWindowUp = (event) => {
     if (!record.dragging) return;
     record.dragging = false;
+    record.lastDragEvent = event;
     forwardDrag(record, event, 2);
     removeWindowDrag(record);
   };
   win.addEventListener("mousemove", record.onWindowMove);
   win.addEventListener("mouseup", record.onWindowUp);
   record.windowDragInstalled = true;
+}
+
+// Keeps extending the selection while the pointer is held outside the
+// viewport, so dragging past the visible area scrolls the document.
+function startDragAutoScroll(record) {
+  if (record.dragTimer != null) return;
+  if (typeof globalThis.setInterval !== "function") return;
+  record.dragTimer = globalThis.setInterval(() => {
+    if (!record.dragging || !record.lastDragEvent) {
+      stopDragAutoScroll(record);
+      return;
+    }
+    const event = record.lastDragEvent;
+    const scroller = record.scroller;
+    if (!scroller || typeof scroller.getBoundingClientRect !== "function") return;
+    const rect = scroller.getBoundingClientRect();
+    const cx = num(event.clientX);
+    const cy = num(event.clientY);
+    const outside =
+      cy < rect.top || cy > rect.bottom || cx < rect.left || cx > rect.right;
+    if (outside) {
+      forwardDrag(record, event, 1);
+    }
+  }, 50);
+}
+
+function stopDragAutoScroll(record) {
+  if (record.dragTimer == null) return;
+  if (typeof globalThis.clearInterval === "function") {
+    globalThis.clearInterval(record.dragTimer);
+  }
+  record.dragTimer = null;
 }
 
 function handleMouseDown(record, event) {
@@ -683,7 +718,9 @@ function handleMouseDown(record, event) {
     reportError(error);
   }
   record.dragging = true;
+  record.lastDragEvent = event;
   installWindowDrag(record);
+  startDragAutoScroll(record);
   preventEvent(event);
   syncSearchPanel(record.editorId);
 }
