@@ -28,6 +28,20 @@ const state = {
 
 const status = document.getElementById("status");
 const container = document.getElementById("editor");
+
+const MIN_EDITOR_HEIGHT = 240;
+const MAX_EDITOR_HEIGHT = () => Math.max(MIN_EDITOR_HEIGHT, window.innerHeight * 0.7);
+
+function fitEditorHeight() {
+  const content = container.querySelector(".cm-content");
+  if (!content) return;
+  const contentHeight = parseFloat(content.style.height) || content.scrollHeight || 0;
+  const target = Math.min(MAX_EDITOR_HEIGHT(), Math.max(MIN_EDITOR_HEIGHT, contentHeight + 24));
+  container.style.minHeight = "0px";
+  container.style.height = `${Math.round(target)}px`;
+}
+
+window.addEventListener("resize", fitEditorHeight);
 const languageSelect = document.getElementById("language");
 const themeSelect = document.getElementById("theme");
 
@@ -107,11 +121,13 @@ function applyTheme(theme) {
 
 applyTheme(state.theme);
 refreshStatus();
+fitEditorHeight();
 
 languageSelect.addEventListener("change", (event) => {
   state.language = event.target.value;
   editor.setOption("language", state.language);
   refreshStatus();
+  fitEditorHeight();
 });
 
 themeSelect.addEventListener("change", (event) => {
@@ -119,6 +135,7 @@ themeSelect.addEventListener("change", (event) => {
   editor.setOption("theme", state.theme);
   applyTheme(state.theme);
   refreshStatus();
+  fitEditorHeight();
 });
 
 for (const id of ["line-numbers", "line-wrapping", "read-only"]) {
@@ -138,23 +155,30 @@ document.getElementById("search").addEventListener("click", () => {
 document.getElementById("undo").addEventListener("click", () => {
   editor.undo();
   refreshStatus();
+  fitEditorHeight();
 });
 
 document.getElementById("redo").addEventListener("click", () => {
   editor.redo();
   refreshStatus();
+  fitEditorHeight();
 });
 
 document.getElementById("fold-all").addEventListener("click", () => {
   editor.foldAll();
   refreshStatus();
+  fitEditorHeight();
 });
 
 document.getElementById("unfold-all").addEventListener("click", () => {
   editor.unfoldAll();
   refreshStatus();
+  fitEditorHeight();
 });
 
 container.addEventListener("keyup", refreshStatus);
 container.addEventListener("mouseup", refreshStatus);
-editor.onUpdate(refreshStatus);
+editor.onUpdate(() => {
+  refreshStatus();
+  fitEditorHeight();
+});
