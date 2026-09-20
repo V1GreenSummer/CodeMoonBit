@@ -1,3 +1,38 @@
+:root {
+  --shell-bg: #f6f8fa;
+  --shell-fg: #24292f;
+  --shell-muted: #57606a;
+  --shell-border: #d0d7de;
+  --shell-panel: #ffffff;
+  --shell-toolbar-bg: #24292f;
+  --shell-toolbar-fg: #f6f8fa;
+  --shell-control-bg: #ffffff;
+  --shell-control-fg: #24292f;
+  --shell-control-border: #8c959f;
+  --shell-control-hover: #eaeef2;
+  --shell-accent: #0969da;
+  --shell-focus-ring: rgba(9, 105, 218, 0.3);
+  --shell-shadow: 0 1px 3px rgba(27, 31, 36, 0.12);
+  --shell-control-height: 28px;
+}
+
+body.dark {
+  --shell-bg: #010409;
+  --shell-fg: #e6edf3;
+  --shell-muted: #8b949e;
+  --shell-border: #30363d;
+  --shell-panel: #0d1117;
+  --shell-toolbar-bg: #161b22;
+  --shell-toolbar-fg: #e6edf3;
+  --shell-control-bg: #21262d;
+  --shell-control-fg: #e6edf3;
+  --shell-control-border: #484f58;
+  --shell-control-hover: #30363d;
+  --shell-accent: #58a6ff;
+  --shell-focus-ring: rgba(88, 166, 255, 0.4);
+  --shell-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
 * {
   box-sizing: border-box;
 }
@@ -5,70 +40,127 @@
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
-  background: #f6f8fa;
-  color: #24292f;
+  background: var(--shell-bg);
+  color: var(--shell-fg);
+  transition: background-color 160ms ease, color 160ms ease;
 }
 
 .toolbar {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding: 10px 16px;
-  background: #24292f;
-  color: #f6f8fa;
+  gap: 8px 12px;
+  min-height: 48px;
+  padding: 8px 16px;
+  background: var(--shell-toolbar-bg);
+  color: var(--shell-toolbar-fg);
+  border-bottom: 1px solid var(--shell-border);
+  box-shadow: var(--shell-shadow);
 }
 
 .toolbar h1 {
   font-size: 16px;
   margin: 0 12px 0 0;
   font-weight: 600;
+  letter-spacing: 0.01em;
 }
 
 .controls {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   font-size: 13px;
 }
 
 .controls label {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.controls label.check {
+  opacity: 0.9;
 }
 
 .controls select,
 .controls button {
+  height: var(--shell-control-height);
+  font: inherit;
   font-size: 13px;
-  padding: 3px 8px;
-  border-radius: 4px;
-  border: 1px solid #57606a;
-  background: #f6f8fa;
-  color: #24292f;
+  padding: 0 9px;
+  border-radius: 6px;
+  border: 1px solid var(--shell-control-border);
+  background: var(--shell-control-bg);
+  color: var(--shell-control-fg);
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+}
+
+.controls select:hover,
+.controls button:hover {
+  background: var(--shell-control-hover);
+}
+
+.controls select:focus-visible,
+.controls button:focus-visible {
+  outline: none;
+  border-color: var(--shell-accent);
+  box-shadow: 0 0 0 3px var(--shell-focus-ring);
+}
+
+.controls button:active {
+  transform: translateY(1px);
+}
+
+.controls input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--shell-accent);
   cursor: pointer;
 }
 
-.controls button:hover {
-  background: #e6edf3;
-}
-
 main {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 16px;
 }
 
 #editor {
   height: 70vh;
   min-height: 320px;
-  border: 1px solid #d0d7de;
-  border-radius: 6px;
+  border: 1px solid var(--shell-border);
+  border-radius: 8px;
   overflow: hidden;
-  background: #ffffff;
+  background: var(--shell-panel);
+  box-shadow: var(--shell-shadow);
 }
 
-footer {
-  padding: 0 16px 16px;
+.shortcuts {
+  margin: 0;
   font-size: 12px;
-  color: #57606a;
+  color: var(--shell-muted);
+}
+
+#status {
+  display: flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--shell-muted);
+  background: var(--shell-bg);
+  border-top: 1px solid var(--shell-border);
+}
+
+#status.error {
+  color: #cf222e;
+}
+
+body.dark #status.error {
+  color: #ff7b72;
 }

@@ -13,7 +13,7 @@
       <div class="controls">
         <label>
           Language
-          <select id="language">
+          <select id="language" title="Syntax highlighting language">
             <optgroup label="MoonBit / data">
               <option value="moonbit" selected>MoonBit</option>
               <option value="plain">Plain text</option>
@@ -79,7 +79,7 @@
         </label>
         <label>
           Theme
-          <select id="theme">
+          <select id="theme" title="Editor theme">
             <option value="light">Light</option>
             <option value="dark">Dark</option>
           </select>
@@ -87,17 +87,21 @@
         <label class="check"><input type="checkbox" id="line-numbers" checked /> Line numbers</label>
         <label class="check"><input type="checkbox" id="line-wrapping" /> Wrap lines</label>
         <label class="check"><input type="checkbox" id="read-only" /> Read-only</label>
-        <button id="search">Search (Mod-F)</button>
-        <button id="undo">Undo</button>
-        <button id="redo">Redo</button>
-        <button id="fold-all">Fold all</button>
-        <button id="unfold-all">Unfold all</button>
+        <button id="search" title="Search (Ctrl/&#8984;-F)">Search</button>
+        <button id="undo" title="Undo (Ctrl/&#8984;-Z)">Undo</button>
+        <button id="redo" title="Redo (Ctrl/&#8984;-Y)">Redo</button>
+        <button id="fold-all" title="Fold all foldable blocks">Fold all</button>
+        <button id="unfold-all" title="Unfold all blocks">Unfold all</button>
       </div>
     </header>
     <main>
-      <div id="editor"></div>
+      <div id="editor" aria-label="Code editor"></div>
+      <p class="shortcuts">
+        Ctrl/&#8984;-F search &middot; Alt-&#8593;/&#8595; multi-cursor &middot;
+        Ctrl/&#8984;-/ comment &middot; Tab indent
+      </p>
     </main>
-    <footer id="status">Ready</footer>
+    <footer id="status" role="status">Loading editor&hellip;</footer>
     <script type="module" src="./demo.js"></script>
   </body>
 </html>
