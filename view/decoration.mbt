@@ -6,6 +6,7 @@ pub(all) enum Decoration {
   Widget(Int, String, String)
   GutterMarker(Int, String)
   Fold(Int)
+  Foldable(Int)
 }
 
 ///|

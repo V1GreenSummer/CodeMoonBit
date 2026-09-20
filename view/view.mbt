@@ -367,6 +367,18 @@ fn EditorView::fold_widget(self : EditorView, line : Int) -> Bool {
 }
 
 ///|
+/// True when `line` starts a foldable block that is not currently folded.
+fn EditorView::foldable_line(self : EditorView, line : Int) -> Bool {
+  for d in self.decorations {
+    match d {
+      Foldable(l) => if l == line { return true }
+      _ => ()
+    }
+  }
+  false
+}
+
+///|
 fn EditorView::render_marks(
   self : EditorView,
   sb : @ffi.JsStringBuilder,
@@ -639,15 +651,25 @@ pub fn EditorView::render(self : EditorView) -> Unit {
       content_html.push("</div>")
     }
     if self.options.line_numbers {
-      gutter_html.push("<div class=\"cm-gutter-line\" style=\"top:")
+      gutter_html.push("<div class=\"cm-gutter-line")
+      if line == main_line {
+        gutter_html.push(" cm-active-gutter")
+      }
+      gutter_html.push("\" style=\"top:")
       push_double(gutter_html, top)
       gutter_html.push("px;height:")
       push_double(gutter_html, height)
       gutter_html.push("px\">")
       if self.fold_widget(line) {
-        gutter_html.push("<span class=\"cm-fold\" data-line=\"")
+        gutter_html.push("<span class=\"cm-fold cm-fold-folded\" data-line=\"")
         gutter_html.push(line.to_string())
-        gutter_html.push("\">+</span>")
+        gutter_html.push("\">\u{25B8}</span>")
+      } else if self.foldable_line(line) {
+        gutter_html.push(
+          "<span class=\"cm-fold cm-fold-foldable\" data-line=\"",
+        )
+        gutter_html.push(line.to_string())
+        gutter_html.push("\">\u{25BE}</span>")
       }
       gutter_html.push((line + 1).to_string())
       gutter_html.push("</div>")
