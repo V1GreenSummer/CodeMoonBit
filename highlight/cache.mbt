@@ -30,9 +30,20 @@ pub fn HighlightCache::tokens_for_line(
   doc : @core.Text,
   line : Int,
 ) -> Array[Token] {
+  self.tokens_and_state_for_line(doc, line).1
+}
+
+///|
+/// Like `tokens_for_line`, but also returns the tokenizer state at the start
+/// of the line (used by the view's per-line HTML cache signature).
+pub fn HighlightCache::tokens_and_state_for_line(
+  self : HighlightCache,
+  doc : @core.Text,
+  line : Int,
+) -> (Int, Array[Token]) {
   let count = doc.lines()
   if count == 0 {
-    return []
+    return (0, [])
   }
   let target = if line < 0 {
     0
@@ -43,7 +54,13 @@ pub fn HighlightCache::tokens_for_line(
   }
   self.ensure(count)
   match self.lines[target] {
-    Some(tokens) => return tokens
+    Some(tokens) => {
+      let state = match self.states[target] {
+        Some(state) => state
+        None => 0
+      }
+      return (state, tokens)
+    }
     None => ()
   }
   let mut start = target
@@ -54,16 +71,20 @@ pub fn HighlightCache::tokens_for_line(
     Some(s) => s
     None => 0
   }
+  let mut state_at_target = 0
   for i = start; i <= target; i = i + 1 {
     self.states[i] = Some(state)
+    if i == target {
+      state_at_target = state
+    }
     let (tokens, next) = self.language.tokenize(doc.line(i), state)
     self.lines[i] = Some(tokens)
     state = next
   }
   self.states[target + 1] = Some(state)
   match self.lines[target] {
-    Some(tokens) => tokens
-    None => []
+    Some(tokens) => (state_at_target, tokens)
+    None => (state_at_target, [])
   }
 }
 

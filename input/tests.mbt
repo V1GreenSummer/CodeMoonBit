@@ -525,3 +525,24 @@ test "backspace at start of line joins lines" {
   let back = st.apply(delete_char_backward(st))
   assert_eq(back.doc().to_string(), "abcd")
 }
+
+///|
+test "word motion and selection" {
+  let st = cursor_state("hello world  foo_bar", 11)
+  let left = st.apply(cursor_word_left(st))
+  assert_eq(left.selection().main_range().head, 6)
+  let left2 = left.apply(cursor_word_left(left))
+  assert_eq(left2.selection().main_range().head, 0)
+  let right = st.apply(cursor_word_right(st))
+  assert_eq(right.selection().main_range().head, 20)
+  let sel = st.apply(select_word_left(st))
+  assert_eq(sel.selection().main_range().anchor, 11)
+  assert_eq(sel.selection().main_range().head, 6)
+  let st2 = cursor_state("foo.bar baz", 3)
+  let dot = st2.apply(cursor_word_left(st2))
+  assert_eq(dot.selection().main_range().head, 0)
+  assert_eq(st2.apply(cursor_word_right(st2)).selection().main_range().head, 4)
+  let sel2 = st2.apply(select_word_right(st2))
+  assert_eq(sel2.selection().main_range().anchor, 3)
+  assert_eq(sel2.selection().main_range().head, 4)
+}

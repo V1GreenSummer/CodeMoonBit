@@ -8,7 +8,7 @@ fn canonical_language_names() -> Array[String] {
     "javascript", "json", "julia", "kotlin", "latex", "less", "lisp", "lua", "makefile",
     "markdown", "moonbit", "nix", "ocaml", "perl", "php", "plain", "powershell",
     "protobuf", "python", "r", "ruby", "rust", "scala", "scss", "shell", "solidity",
-    "sql", "swift", "toml", "typescript", "vue", "xml", "yaml",
+    "sql", "swift", "toml", "typescript", "typst", "vue", "xml", "yaml",
   ]
   names.sort()
   names
@@ -74,6 +74,7 @@ fn build_registry() -> Map[String, Language] {
   add(["xml"], xml_language())
   add(["sql"], sql_language())
   add(["latex", "tex"], latex_language())
+  add(["typst", "typ"], typst_language())
   add(["html", "htm", "svg"], html_language())
   add(["css"], css_language())
   add(["scss"], scss_language())

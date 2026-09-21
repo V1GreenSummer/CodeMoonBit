@@ -432,6 +432,118 @@ pub fn select_char_right(state : @state.EditorState) -> @state.TransactionSpec {
 }
 
 ///|
+fn is_space_unit(c : Int) -> Bool {
+  c == 32 || c == 9 || c == 10 || c == 13
+}
+
+///|
+fn is_word_unit(c : Int) -> Bool {
+  (c >= 48 && c <= 57) ||
+  (c >= 65 && c <= 90) ||
+  (c >= 97 && c <= 122) ||
+  c == 95 ||
+  c >= 0x80
+}
+
+///|
+/// The previous word boundary before `pos`, skipping whitespace first and
+/// then either a word run or a punctuation run.
+pub fn prev_word_boundary(doc : @core.Text, pos : Int) -> Int {
+  let n = doc.length()
+  let mut p = if pos > n { n } else { pos }
+  while p > 0 && is_space_unit(code_unit_at(doc, p - 1)) {
+    p = prev_char_boundary(doc, p)
+  }
+  if p > 0 {
+    if is_word_unit(code_unit_at(doc, p - 1)) {
+      while p > 0 && is_word_unit(code_unit_at(doc, p - 1)) {
+        p = prev_char_boundary(doc, p)
+      }
+    } else {
+      while p > 0 &&
+            !is_word_unit(code_unit_at(doc, p - 1)) &&
+            !is_space_unit(code_unit_at(doc, p - 1)) {
+        p = prev_char_boundary(doc, p)
+      }
+    }
+  }
+  p
+}
+
+///|
+/// The next word boundary after `pos`, skipping whitespace first and then
+/// either a word run or a punctuation run.
+pub fn next_word_boundary(doc : @core.Text, pos : Int) -> Int {
+  let n = doc.length()
+  let mut p = if pos < 0 { 0 } else { pos }
+  while p < n && is_space_unit(code_unit_at(doc, p)) {
+    p = next_char_boundary(doc, p)
+  }
+  if p < n {
+    if is_word_unit(code_unit_at(doc, p)) {
+      while p < n && is_word_unit(code_unit_at(doc, p)) {
+        p = next_char_boundary(doc, p)
+      }
+    } else {
+      while p < n &&
+            !is_word_unit(code_unit_at(doc, p)) &&
+            !is_space_unit(code_unit_at(doc, p)) {
+        p = next_char_boundary(doc, p)
+      }
+    }
+  }
+  p
+}
+
+///|
+/// Moves each cursor to the start of the previous word.
+pub fn cursor_word_left(state : @state.EditorState) -> @state.TransactionSpec {
+  let doc = state.doc()
+  let ranges : Array[@core.SelectionRange] = []
+  for r in state.selection().ranges() {
+    ranges.push(@core.SelectionRange::cursor(prev_word_boundary(doc, r.from())))
+  }
+  selection_result(state, ranges)
+}
+
+///|
+/// Moves each cursor to the start of the next word.
+pub fn cursor_word_right(state : @state.EditorState) -> @state.TransactionSpec {
+  let doc = state.doc()
+  let ranges : Array[@core.SelectionRange] = []
+  for r in state.selection().ranges() {
+    ranges.push(@core.SelectionRange::cursor(next_word_boundary(doc, r.to())))
+  }
+  selection_result(state, ranges)
+}
+
+///|
+/// Extends each selection to the previous word boundary.
+pub fn select_word_left(state : @state.EditorState) -> @state.TransactionSpec {
+  let doc = state.doc()
+  let ranges : Array[@core.SelectionRange] = []
+  for r in state.selection().ranges() {
+    ranges.push(
+      @core.SelectionRange::new(r.anchor, prev_word_boundary(doc, r.head)),
+    )
+  }
+  selection_result(state, ranges)
+}
+
+///|
+/// Extends each selection to the next word boundary.
+pub fn select_word_right(state : @state.EditorState) -> @state.TransactionSpec {
+  let doc = state.doc()
+  let ranges : Array[@core.SelectionRange] = []
+  for r in state.selection().ranges() {
+    ranges.push(
+      @core.SelectionRange::new(r.anchor, next_word_boundary(doc, r.head)),
+    )
+  }
+  selection_result(state, ranges)
+}
+
+///|
 /// Extends each selection one line up.
 pub fn select_line_up(state : @state.EditorState) -> @state.TransactionSpec {
   let doc = state.doc()

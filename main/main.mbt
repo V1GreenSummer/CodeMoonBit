@@ -34,6 +34,72 @@ pub fn cm_set_doc(id : Int, text : @ffi.JsAny) -> Unit {
 }
 
 ///|
+pub fn cm_set_selection(id : Int, anchor : Int, head : Int) -> Unit {
+  with_editor(id, fn(editor) { editor.set_selection(anchor, head) })
+}
+
+///|
+fn json_int(obj : Map[String, Json], key : String, fallback : Int) -> Int {
+  match obj.get(key) {
+    Some(Json::Number(n, ..)) => n.to_int()
+    _ => fallback
+  }
+}
+
+///|
+fn json_text(
+  obj : Map[String, Json],
+  key : String,
+  fallback : String,
+) -> String {
+  match obj.get(key) {
+    Some(Json::String(s)) => s
+    _ => fallback
+  }
+}
+
+///|
+/// Replaces the in-editor diagnostics. The host sends a JSON array of
+/// `{severity, message, line, column, endLine, endColumn}` objects with
+/// 1-based positions, matching the workbench diagnostic shape.
+pub fn cm_set_diagnostics(id : Int, payload : @ffi.JsAny) -> Unit {
+  with_editor(id, fn(editor) {
+    let text = @ffi.read_js_string(payload)
+    let doc = editor.state().doc()
+    let list : Array[@editor.Diagnostic] = []
+    let parsed : Json? = Some(@json.parse(text)) catch { _ => None }
+    match parsed {
+      Some(Json::Array(items)) =>
+        for item in items {
+          match item {
+            Json::Object(obj) => {
+              let line = json_int(obj, "line", 1)
+              let column = json_int(obj, "column", 1)
+              let end_line = json_int(obj, "endLine", line)
+              let end_column = json_int(obj, "endColumn", column + 1)
+              let from = doc.pos(line - 1, column - 1)
+              let to = doc.pos(end_line - 1, end_column - 1)
+              list.push(@editor.Diagnostic::{
+                from,
+                to: if to > from {
+                  to
+                } else {
+                  from
+                },
+                severity: json_text(obj, "severity", "error"),
+                message: json_text(obj, "message", ""),
+              })
+            }
+            _ => ()
+          }
+        }
+      _ => ()
+    }
+    editor.set_diagnostics(list)
+  })
+}
+
+///|
 pub fn cm_get_doc(id : Int) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => @ffi.js_string(editor.doc_string())

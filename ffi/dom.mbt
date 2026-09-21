@@ -30,6 +30,11 @@ pub fn push_string(sb : Int, s : String) -> Unit {
 }
 
 ///|
+/// Pushes an already-built JS string into the builder with a single call
+/// (used by the per-line HTML cache).
+pub extern "wasm" fn sb_push_js(sb : Int, value : JsAny) -> Unit = "dom" "sb_push_js"
+
+///|
 pub fn push_js_string(sb : Int, s : JsAny) -> Unit {
   let n = js_len(s)
   for i = 0; i < n; i = i + 1 {
@@ -83,6 +88,11 @@ pub fn JsStringBuilder::push_char(self : JsStringBuilder, c : Char) -> Unit {
 ///|
 pub fn JsStringBuilder::push_code(self : JsStringBuilder, code : Int) -> Unit {
   sb_push(self.handle, code)
+}
+
+///|
+pub fn JsStringBuilder::push_js(self : JsStringBuilder, value : JsAny) -> Unit {
+  sb_push_js(self.handle, value)
 }
 
 ///|
@@ -174,6 +184,17 @@ pub extern "wasm" fn request_measure(editor_id : Int) -> Unit = "dom" "request_m
 
 ///|
 pub extern "wasm" fn notify_update(editor_id : Int) -> Unit = "dom" "notify_update"
+
+///|
+/// Updates the persistent caret overlay (created once in the JS scaffold) so
+/// re-rendering never recreates it (no blink restarts / flicker).
+pub extern "wasm" fn set_cursor(
+  element : JsAny,
+  x : Double,
+  y : Double,
+  height : Double,
+  visible : Int,
+) -> Unit = "dom" "set_cursor"
 
 ///|
 pub extern "wasm" fn log(message : JsAny) -> Unit = "dom" "log"

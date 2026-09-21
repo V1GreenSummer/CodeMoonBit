@@ -146,6 +146,9 @@ export async function createEditor(container, options = {}) {
     setDoc(text) {
       wasm.cm_set_doc(id, String(text));
     },
+    setSelection(anchor, head = anchor) {
+      wasm.cm_set_selection(id, anchor | 0, head | 0);
+    },
     getHTML() {
       return wasm.cm_get_html(id);
     },
@@ -223,6 +226,9 @@ export async function createEditor(container, options = {}) {
     },
     selectedText() {
       return wasm.cm_selected_text(id);
+    },
+    setDiagnostics(json) {
+      wasm.cm_set_diagnostics(id, String(json));
     },
     setOption(key, value) {
       const encoded = String(value);

@@ -476,3 +476,65 @@ test "language names and aliases" {
   assert_eq(language_by_name("C++").name(), "cpp")
   assert_eq(language_by_name("unknown-language").name(), "plain")
 }
+
+///|
+test "typst: headings, lists, comments" {
+  let lang = typst_language()
+  let (heading, hs) = lang.tokenize("= Title", 0)
+  assert_eq(hs, 0)
+  assert_eq(heading[0].typ, TypeName)
+  assert_eq(heading[0].from, 0)
+  assert_eq(heading[0].to, 7)
+  let (list, _) = lang.tokenize("- item", 0)
+  assert_eq(list[0].typ, Keyword)
+  assert_eq(list[0].to, 1)
+  let (c, _) = lang.tokenize("// note", 0)
+  assert_eq(c[0].typ, Comment)
+  assert_eq(c[0].to, 7)
+  let (b1, s1) = lang.tokenize("/* a /* b", 0)
+  assert_eq(b1[0].typ, Comment)
+  assert_eq(s1, 12)
+  let (b2, s2) = lang.tokenize("c */ d", s1)
+  assert_eq(s2, 11)
+  assert_eq(b2[0].typ, Comment)
+  assert_eq(b2[0].to, 4)
+  let (b3, s3) = lang.tokenize("e */ f", s2)
+  assert_eq(s3, 0)
+  assert_eq(b3[0].to, 4)
+}
+
+///|
+test "typst: markup spans continue across lines" {
+  let lang = typst_language()
+  let (m, ms) = lang.tokenize("$ x + y", 0)
+  assert_eq(m[0].typ, Number)
+  assert_eq(ms, 3)
+  let (m2, ms2) = lang.tokenize("z $", ms)
+  assert_eq(ms2, 0)
+  assert_eq(m2[0].typ, Number)
+  let (s, ss) = lang.tokenize("\"hello", 0)
+  assert_eq(s[0].typ, String)
+  assert_eq(ss, 1)
+  let (_s2, ss2) = lang.tokenize("world\"", ss)
+  assert_eq(ss2, 0)
+  let (raw, rs) = lang.tokenize("`code`", 0)
+  assert_eq(rs, 0)
+  assert_eq(raw[0].typ, String)
+}
+
+///|
+test "typst: commands, refs, labels, keywords" {
+  let lang = typst_language()
+  let (cmd, _) = lang.tokenize("#set text(size: 10pt)", 0)
+  assert_eq(cmd[0].typ, Keyword)
+  assert_eq(cmd[0].to, 4)
+  let (reference, _) = lang.tokenize("See @smith2020.", 0)
+  assert_eq(reference[0].typ, Tag)
+  assert_eq(reference[0].from, 4)
+  let (label, _) = lang.tokenize("<intro>", 0)
+  assert_eq(label[0].typ, Attribute)
+  let (kw, _) = lang.tokenize("let x = 1", 0)
+  assert_eq(kw[0].typ, Keyword)
+  let (num, _) = lang.tokenize("1.5em", 0)
+  assert_eq(num[0].typ, Number)
+}

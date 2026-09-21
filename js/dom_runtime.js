@@ -286,7 +286,8 @@ function buildPanel(panel) {
 
 function refreshContentSize(content) {
   let maxY = 0;
-  const children = content.children || [];
+  const inner = content.__cmInner || content;
+  const children = inner.children || [];
   for (let i = 0; i < children.length; i = i + 1) {
     const child = children[i];
     const style = child.style || {};
@@ -336,6 +337,19 @@ function createScaffold(container, editorId) {
     whiteSpace: "pre",
   });
   content.__cmRole = "content";
+  // Line markup lives in an inner container so the persistent caret overlay
+  // (a sibling) survives innerHTML replacement: the blink animation never
+  // restarts and the caret cannot flicker.
+  const inner = createEl("div");
+  inner.className = "cm-content-inner";
+  setStyles(inner, { position: "absolute", top: "0", left: "0" });
+  content.__cmInner = inner;
+  content.appendChild(inner);
+  const cursor = createEl("div");
+  cursor.className = "cm-cursor";
+  setStyles(cursor, { display: "none" });
+  content.__cmCursor = cursor;
+  content.appendChild(cursor);
 
   const input = createEl("textarea");
   input.className = "cm-input";
@@ -362,7 +376,7 @@ function createScaffold(container, editorId) {
   input.value = "";
 
   const panel = createEl("div");
-  panel.className = "cm-panel cm-panel-hidden";
+  panel.className = "cm-panel cm-search cm-panel-hidden";
   setStyleValue(panel, "display", "none");
   buildPanel(panel);
 
@@ -1026,7 +1040,11 @@ export function createDomImports() {
     },
     sb_push(handle, code) {
       const units = builders.get(handle);
-      if (units) units.push(code & 0xffff);
+      if (units) units.push(String.fromCharCode(code & 0xffff));
+    },
+    sb_push_js(handle, value) {
+      const units = builders.get(handle);
+      if (units) units.push(typeof value === "string" ? value : String(value));
     },
     sb_clear(handle) {
       const units = builders.get(handle);
@@ -1035,7 +1053,7 @@ export function createDomImports() {
     sb_finish(handle) {
       const units = builders.get(handle);
       builders.delete(handle);
-      return units ? codeUnitsToString(units) : "";
+      return units ? units.join("") : "";
     },
     js_len(value) {
       return typeof value === "string" ? value.length : 0;
@@ -1055,8 +1073,21 @@ export function createDomImports() {
     },
     set_html(element, html) {
       if (!element) return;
-      element.innerHTML = html == null ? "" : html;
+      const target = element.__cmInner || element;
+      target.innerHTML = html == null ? "" : html;
       if (element.__cmRole === "content") refreshContentSize(element);
+    },
+    set_cursor(element, x, y, height, visible) {
+      const cursor = element && element.__cmCursor;
+      if (!cursor) return;
+      const display = visible ? "block" : "none";
+      const left = `${num(x)}px`;
+      const top = `${num(y)}px`;
+      const boxHeight = `${num(height)}px`;
+      if (cursor.style.display !== display) cursor.style.display = display;
+      if (cursor.style.left !== left) cursor.style.left = left;
+      if (cursor.style.top !== top) cursor.style.top = top;
+      if (cursor.style.height !== boxHeight) cursor.style.height = boxHeight;
     },
     set_text(element, text) {
       if (!element) return;

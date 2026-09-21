@@ -5,6 +5,7 @@ import {
   "codemoonbit/codemoonbit/input",
   "codemoonbit/codemoonbit/ffi",
   "codemoonbit/codemoonbit/editor",
+  "moonbitlang/core/json",
 }
 
 pkgtype(kind: "executable")
@@ -19,6 +20,8 @@ options(
         "cm_destroy",
         "cm_set_option",
         "cm_set_doc",
+        "cm_set_selection",
+        "cm_set_diagnostics",
         "cm_get_doc",
         "cm_get_html",
         "cm_get_selection",

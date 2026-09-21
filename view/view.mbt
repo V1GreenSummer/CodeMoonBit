@@ -33,6 +33,12 @@ pub struct EditorView {
   priv mut vis_tops : Array[Double]
   priv mut vis_heights : Array[Double]
   priv mut total_height : Double
+  /// Per-line HTML cache: (signature, html) keyed by document line; unchanged
+  /// lines are pushed into the frame with one FFI call instead of being
+  /// rebuilt glyph by glyph.
+  priv mut line_html_cache : Array[(String, @ffi.JsAny)?]
+  priv mut gutter_html_cache : Array[(String, @ffi.JsAny)?]
+  priv mut cache_gen : Int
 }
 
 ///|
@@ -78,6 +84,9 @@ pub fn EditorView::new(
     vis_tops: [],
     vis_heights: [],
     total_height: 0.0,
+    line_html_cache: [],
+    gutter_html_cache: [],
+    cache_gen: 0,
   }
   view.client_width = @ffi.client_width(scroller)
   view.client_height = @ffi.client_height(scroller)
@@ -118,6 +127,7 @@ pub fn EditorView::set_options(
   self.options = options
   self.language = @highlight.language_by_name(options.language_name)
   self.highlighter = @highlight.HighlightCache::new(self.language)
+  self.invalidate_render_cache()
   self.render()
 }
 
@@ -144,6 +154,7 @@ pub fn EditorView::set_state(
 ) -> Unit {
   self.state = state
   self.highlighter.invalidate(0)
+  self.invalidate_render_cache()
   self.render()
   @ffi.notify_update(self.editor_id)
 }
@@ -287,15 +298,28 @@ fn push_double(sb : @ffi.JsStringBuilder, v : Double) -> Unit {
 
 ///|
 fn push_escaped(sb : @ffi.JsStringBuilder, s : String) -> Unit {
-  for i = 0; i < s.length(); i = i + 1 {
-    let code = s.unsafe_get(i).to_int()
-    match code {
-      38 => sb.push("&amp;")
-      60 => sb.push("&lt;")
-      62 => sb.push("&gt;")
-      34 => sb.push("&quot;")
-      _ => sb.push_code(code)
+  let n = s.length()
+  let mut start = 0
+  let mut i = 0
+  while i < n {
+    let escaped = match s.unsafe_get(i).to_int() {
+      38 => "&amp;"
+      60 => "&lt;"
+      62 => "&gt;"
+      34 => "&quot;"
+      _ => ""
     }
+    if escaped != "" {
+      if i > start {
+        sb.push(s[start:i].to_owned())
+      }
+      sb.push(escaped)
+      start = i + 1
+    }
+    i = i + 1
+  }
+  if start < n {
+    sb.push(s[start:n].to_owned())
   }
 }
 
@@ -480,6 +504,8 @@ fn EditorView::render_selections(
   let doc = self.state.doc()
   let lh = self.options.line_height
   let ranges = self.state.selection().ranges()
+  let main = self.state.selection().main_range()
+  let mut main_cursor_placed = false
   for r in ranges {
     if r.is_empty() {
       let pos = r.head
@@ -494,13 +520,18 @@ fn EditorView::render_selections(
         } else {
           x
         }
-        sb.push("<div class=\"cm-cursor\" style=\"left:")
-        push_double(sb, xx)
-        sb.push("px;top:")
-        push_double(sb, y)
-        sb.push("px;height:")
-        push_double(sb, lh)
-        sb.push("px\"></div>")
+        if r.anchor == main.anchor && r.head == main.head {
+          main_cursor_placed = true
+          @ffi.set_cursor(self.content, xx, y, lh, 1)
+        } else {
+          sb.push("<div class=\"cm-cursor\" style=\"left:")
+          push_double(sb, xx)
+          sb.push("px;top:")
+          push_double(sb, y)
+          sb.push("px;height:")
+          push_double(sb, lh)
+          sb.push("px\"></div>")
+        }
       }
     } else {
       let (from_line, from_col) = doc.line_col(r.from())
@@ -559,6 +590,9 @@ fn EditorView::render_selections(
       }
     }
   }
+  if !main_cursor_placed {
+    @ffi.set_cursor(self.content, 0.0, 0.0, lh, 0)
+  }
 }
 
 ///|
@@ -582,6 +616,160 @@ fn EditorView::segment_offset(self : EditorView, x : Double) -> Double {
 }
 
 ///|
+fn EditorView::invalidate_render_cache(self : EditorView) -> Unit {
+  self.cache_gen = self.cache_gen + 1
+  self.line_html_cache = []
+  self.gutter_html_cache = []
+}
+
+///|
+fn EditorView::cached_line_html(
+  self : EditorView,
+  line : Int,
+  signature : String,
+) -> @ffi.JsAny? {
+  if line < 0 || line >= self.line_html_cache.length() {
+    return None
+  }
+  match self.line_html_cache[line] {
+    Some((cached, html)) => if cached == signature { Some(html) } else { None }
+    None => None
+  }
+}
+
+///|
+fn EditorView::put_line_html(
+  self : EditorView,
+  line : Int,
+  signature : String,
+  html : @ffi.JsAny,
+) -> Unit {
+  while self.line_html_cache.length() <= line {
+    self.line_html_cache.push(None)
+  }
+  self.line_html_cache[line] = Some((signature, html))
+}
+
+///|
+fn EditorView::cached_gutter_html(
+  self : EditorView,
+  line : Int,
+  signature : String,
+) -> @ffi.JsAny? {
+  if line < 0 || line >= self.gutter_html_cache.length() {
+    return None
+  }
+  match self.gutter_html_cache[line] {
+    Some((cached, html)) => if cached == signature { Some(html) } else { None }
+    None => None
+  }
+}
+
+///|
+fn EditorView::put_gutter_html(
+  self : EditorView,
+  line : Int,
+  signature : String,
+  html : @ffi.JsAny,
+) -> Unit {
+  while self.gutter_html_cache.length() <= line {
+    self.gutter_html_cache.push(None)
+  }
+  self.gutter_html_cache[line] = Some((signature, html))
+}
+
+///|
+fn EditorView::build_line_html(
+  self : EditorView,
+  line : Int,
+  top : Double,
+  main_line : Int,
+  text : String,
+  tokens : Array[@highlight.Token],
+  starts : Array[Int],
+) -> @ffi.JsAny {
+  let sb = @ffi.JsStringBuilder::new()
+  let lh = self.options.line_height
+  let active = if line == main_line { " cm-active-line" } else { "" }
+  let classes = self.decoration_classes(line)
+  for seg = 0; seg + 1 < starts.length(); seg = seg + 1 {
+    let c1 = starts[seg]
+    let c2 = starts[seg + 1]
+    let seg_top = top + lh * seg.to_double()
+    sb.push("<div class=\"cm-line")
+    sb.push(active)
+    sb.push(classes)
+    sb.push("\" style=\"top:")
+    push_double(sb, seg_top)
+    sb.push("px;height:")
+    push_double(sb, lh)
+    sb.push("px\">")
+    let mut pos = c1
+    for tok in tokens {
+      if tok.to <= c1 {
+        continue
+      }
+      if tok.from >= c2 {
+        break
+      }
+      let tf = tok.from.max(c1)
+      let tt = tok.to.min(c2)
+      if tf > pos {
+        push_escaped(sb, text[pos:tf].to_owned())
+      }
+      sb.push("<span class=\"")
+      sb.push(token_class(tok.typ))
+      sb.push("\" data-token=\"")
+      sb.push(token_name(tok.typ))
+      sb.push("\">")
+      push_escaped(sb, text[tf:tt].to_owned())
+      sb.push("</span>")
+      pos = tt
+    }
+    if pos < c2 {
+      push_escaped(sb, text[pos:c2].to_owned())
+    }
+    if seg + 2 == starts.length() && self.fold_widget(line) {
+      sb.push("<span class=\"cm-fold-ellipsis\">\u{2026}</span>")
+    }
+    sb.push("</div>")
+  }
+  sb.finish()
+}
+
+///|
+fn EditorView::build_gutter_html(
+  self : EditorView,
+  line : Int,
+  top : Double,
+  height : Double,
+  main_line : Int,
+) -> @ffi.JsAny {
+  let sb = @ffi.JsStringBuilder::new()
+  sb.push("<div class=\"cm-gutter-line")
+  if line == main_line {
+    sb.push(" cm-active-gutter")
+  }
+  sb.push("\" style=\"top:")
+  push_double(sb, top)
+  sb.push("px;height:")
+  push_double(sb, height)
+  sb.push("px\">")
+  if self.fold_widget(line) {
+    sb.push("<span class=\"cm-fold cm-fold-folded\" data-line=\"")
+    sb.push(line.to_string())
+    sb.push("\">\u{25B8}</span>")
+  } else if self.foldable_line(line) {
+    sb.push("<span class=\"cm-fold cm-fold-foldable\" data-line=\"")
+    sb.push(line.to_string())
+    sb.push("\">\u{25BE}</span>")
+  }
+  sb.push((line + 1).to_string())
+  sb.push("</div>")
+  sb.finish()
+}
+
+///|
 pub fn EditorView::render(self : EditorView) -> Unit {
   self.client_width = @ffi.client_width(self.scroller)
   self.client_height = @ffi.client_height(self.scroller)
@@ -597,82 +785,40 @@ pub fn EditorView::render(self : EditorView) -> Unit {
   let content_html = @ffi.JsStringBuilder::new()
   let gutter_html = @ffi.JsStringBuilder::new()
   let (main_line, _) = doc.line_col(self.state.selection().main_range().head)
-  let lh = self.options.line_height
   for i = first; i <= last && i < lines.length(); i = i + 1 {
     let line = lines[i]
     let top = self.vis_tops[i]
     let layout = self.layout_line(line)
     let height = self.line_height_of(layout)
-    let classes = self.decoration_classes(line)
     let active = if line == main_line { " cm-active-line" } else { "" }
     let text = doc.line(line)
-    let tokens = self.highlighter.tokens_for_line(doc, line)
-    let starts = self.segment_starts(line)
-    for seg = 0; seg + 1 < starts.length(); seg = seg + 1 {
-      let c1 = starts[seg]
-      let c2 = starts[seg + 1]
-      let seg_top = top + lh * seg.to_double()
-      content_html.push("<div class=\"cm-line")
-      content_html.push(active)
-      content_html.push(classes)
-      content_html.push("\" style=\"top:")
-      push_double(content_html, seg_top)
-      content_html.push("px;height:")
-      push_double(content_html, lh)
-      content_html.push("px\">")
-      let mut pos = c1
-      for tok in tokens {
-        if tok.to <= c1 {
-          continue
-        }
-        if tok.from >= c2 {
-          break
-        }
-        let tf = tok.from.max(c1)
-        let tt = tok.to.min(c2)
-        if tf > pos {
-          push_escaped(content_html, text[pos:tf].to_owned())
-        }
-        content_html.push("<span class=\"")
-        content_html.push(token_class(tok.typ))
-        content_html.push("\" data-token=\"")
-        content_html.push(token_name(tok.typ))
-        content_html.push("\">")
-        push_escaped(content_html, text[tf:tt].to_owned())
-        content_html.push("</span>")
-        pos = tt
-      }
-      if pos < c2 {
-        push_escaped(content_html, text[pos:c2].to_owned())
-      }
-      if seg + 2 == starts.length() && self.fold_widget(line) {
-        content_html.push("<span class=\"cm-fold-ellipsis\">\u{2026}</span>")
-      }
-      content_html.push("</div>")
-    }
-    if self.options.line_numbers {
-      gutter_html.push("<div class=\"cm-gutter-line")
-      if line == main_line {
-        gutter_html.push(" cm-active-gutter")
-      }
-      gutter_html.push("\" style=\"top:")
-      push_double(gutter_html, top)
-      gutter_html.push("px;height:")
-      push_double(gutter_html, height)
-      gutter_html.push("px\">")
-      if self.fold_widget(line) {
-        gutter_html.push("<span class=\"cm-fold cm-fold-folded\" data-line=\"")
-        gutter_html.push(line.to_string())
-        gutter_html.push("\">\u{25B8}</span>")
-      } else if self.foldable_line(line) {
-        gutter_html.push(
-          "<span class=\"cm-fold cm-fold-foldable\" data-line=\"",
+    let (state, tokens) = self.highlighter.tokens_and_state_for_line(doc, line)
+    let fold = self.fold_widget(line)
+    let foldable = self.foldable_line(line)
+    let signature = "\{self.cache_gen}|\{line}|\{state}|\{top}|\{active}|\{fold}|\{foldable}|\{text}|\{self.decoration_classes(line)}"
+    let html = match self.cached_line_html(line, signature) {
+      Some(html) => html
+      None => {
+        let starts = self.segment_starts(line)
+        let built = self.build_line_html(
+          line, top, main_line, text, tokens, starts,
         )
-        gutter_html.push(line.to_string())
-        gutter_html.push("\">\u{25BE}</span>")
+        self.put_line_html(line, signature, built)
+        built
       }
-      gutter_html.push((line + 1).to_string())
-      gutter_html.push("</div>")
+    }
+    content_html.push_js(html)
+    if self.options.line_numbers {
+      let gutter_signature = "\{self.cache_gen}|\{line}|\{top}|\{height}|\{active}|\{fold}|\{foldable}"
+      let gutter = match self.cached_gutter_html(line, gutter_signature) {
+        Some(html) => html
+        None => {
+          let built = self.build_gutter_html(line, top, height, main_line)
+          self.put_gutter_html(line, gutter_signature, built)
+          built
+        }
+      }
+      gutter_html.push_js(gutter)
     }
   }
   self.render_marks(content_html)
@@ -825,10 +971,16 @@ fn EditorView::ensure_cursor_visible(self : EditorView) -> Unit {
     new_left = 0.0
   }
   if new_top != self.scroll_top || new_left != self.scroll_left {
+    let previous_first = self.first_visible_index()
+    let previous_last = self.last_visible_index_after(previous_first)
     self.scroll_top = new_top
     self.scroll_left = new_left
     @ffi.set_scroll(self.scroller, new_top, new_left)
-    self.render()
+    let next_first = self.first_visible_index()
+    let next_last = self.last_visible_index_after(next_first)
+    if next_first != previous_first || next_last != previous_last {
+      self.render()
+    }
   }
 }
 
@@ -865,15 +1017,17 @@ pub fn EditorView::apply_spec(
 
 ///|
 pub fn EditorView::set_doc(self : EditorView, text : String) -> Unit {
-  self.state = @state.EditorState::create(
-    config=[self.state.extensions()],
-    doc=@core.Text::of(text),
+  self.invalidate_render_cache()
+  let changes = @core.ChangeSet::of([
+    @core.Change::new(0, self.state.length(), text),
+  ])
+  let spec = @state.TransactionSpec::new(
+    changes~,
+    selection=@core.EditorSelection::cursor(0),
+    annotations=[@state.UserEvent("setValue")],
+    scroll_into_view=true,
   )
-  self.highlighter.invalidate(0)
-  self.scroll_top = 0.0
-  self.scroll_left = 0.0
-  self.render()
-  @ffi.notify_update(self.editor_id)
+  let _ = self.apply_spec(spec)
 }
 
 ///|
@@ -1151,10 +1305,16 @@ fn EditorView::auto_scroll_drag(
     new_left = 0.0
   }
   if new_top != self.scroll_top || new_left != self.scroll_left {
+    let previous_first = self.first_visible_index()
+    let previous_last = self.last_visible_index_after(previous_first)
     self.scroll_top = new_top
     self.scroll_left = new_left
     @ffi.set_scroll(self.scroller, new_top, new_left)
-    self.render()
+    let next_first = self.first_visible_index()
+    let next_last = self.last_visible_index_after(next_first)
+    if next_first != previous_first || next_last != previous_last {
+      self.render()
+    }
   }
 }
 

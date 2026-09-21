@@ -1,4 +1,13 @@
 ///|
+/// A compiler/linter diagnostic rendered as an in-editor mark.
+pub(all) struct Diagnostic {
+  from : Int
+  to : Int
+  severity : String
+  message : String
+} derive(Debug, Eq)
+
+///|
 /// A high-level editor instance bound to a DOM container.
 pub struct Editor {
   priv view : @view.EditorView
@@ -7,6 +16,7 @@ pub struct Editor {
   priv mut comp_active : Bool
   priv mut comp_from : Int?
   priv mut comp_text : String
+  priv mut diagnostics : Array[Diagnostic]
 }
 
 ///|
@@ -65,6 +75,7 @@ pub fn Editor::create(container : @ffi.JsAny, id : Int) -> Editor {
     comp_active: false,
     comp_from: None,
     comp_text: "",
+    diagnostics: [],
   }
   view.set_decorations_provider(fn(s) { editor.decorations(s) })
   view.set_line_filter(fn(s, line) { is_line_visible(s, line) })
@@ -150,7 +161,25 @@ fn Editor::decorations(
       None => ()
     }
   }
+  for d in self.diagnostics {
+    let cls = if d.severity == "warning" {
+      "cm-diagnostic-warning"
+    } else {
+      "cm-diagnostic-error"
+    }
+    result.push(@view.Decoration::Mark(@core.Range::new(d.from, d.to), cls))
+  }
   result
+}
+
+///|
+/// Replaces the in-editor diagnostic marks and redraws.
+pub fn Editor::set_diagnostics(self : Editor, list : Array[Diagnostic]) -> Unit {
+  if self.diagnostics == list {
+    return
+  }
+  self.diagnostics = list
+  self.view.render()
 }
 
 ///|
@@ -185,6 +214,18 @@ fn Editor::reset_composition(self : Editor) -> Unit {
 pub fn Editor::set_doc(self : Editor, text : String) -> Unit {
   self.reset_composition()
   self.view.set_doc(text)
+}
+
+///|
+pub fn Editor::set_selection(self : Editor, anchor : Int, head : Int) -> Unit {
+  ignore(
+    self.apply(
+      @state.TransactionSpec::new(
+        selection=@core.EditorSelection::single(anchor, head),
+        scroll_into_view=true,
+      ),
+    ),
+  )
 }
 
 ///|
@@ -409,8 +450,17 @@ fn Editor::apply_composition_change(
   to : Int,
   text : String,
 ) -> Unit {
+  let cs = @core.ChangeSet::of([@core.Change::new(from, to, text)])
+  let selection = self.state().selection()
+  let ranges : Array[@core.SelectionRange] = []
+  for r in selection.ranges() {
+    ranges.push(
+      @core.SelectionRange::new(cs.map_pos(r.anchor, 1), cs.map_pos(r.head, 1)),
+    )
+  }
   let spec = @state.TransactionSpec::new(
-    changes=@core.ChangeSet::of([@core.Change::new(from, to, text)]),
+    changes=cs,
+    selection=@core.EditorSelection::create(ranges, selection.main_index()),
     annotations=[@state.UserEvent("input.type")],
     scroll_into_view=true,
   )
