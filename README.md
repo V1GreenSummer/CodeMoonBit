@@ -140,3 +140,7 @@ The returned handle exposes `getDoc`, `setDoc`, `setSelection`, `getHTML`,
 - The regex engine used by search is a small subset, not a full regex engine.
 - The document structure is a line array with persistent unchanged strings, not
   a rope; very large documents pay O(lines) per edit.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
