@@ -1,10 +1,10 @@
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/state",
-  "codemoonbit/codemoonbit/search",
-  "codemoonbit/codemoonbit/input",
-  "codemoonbit/codemoonbit/ffi",
-  "codemoonbit/codemoonbit/editor",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/search",
+  "V1GreenSummer/codemoonbit/input",
+  "V1GreenSummer/codemoonbit/ffi",
+  "V1GreenSummer/codemoonbit/editor",
   "moonbitlang/core/json",
 }
 

@@ -1,10 +1,12 @@
-name = "codemoonbit/codemoonbit"
+name = "V1GreenSummer/codemoonbit"
 
 version = "0.1.0"
 
 readme = "README.md"
 
 license = "MIT"
+
+repository = "https://github.com/V1GreenSummer/CodeMoonBit"
 
 keywords = [ "editor", "codemirror", "wasm" ]
 

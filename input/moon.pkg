@@ -1,6 +1,6 @@
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/state",
 }
 
 supported_targets = "wasm-gc"

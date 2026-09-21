@@ -1,11 +1,11 @@
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/state",
-  "codemoonbit/codemoonbit/highlight",
-  "codemoonbit/codemoonbit/search",
-  "codemoonbit/codemoonbit/input",
-  "codemoonbit/codemoonbit/view",
-  "codemoonbit/codemoonbit/ffi",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/highlight",
+  "V1GreenSummer/codemoonbit/search",
+  "V1GreenSummer/codemoonbit/input",
+  "V1GreenSummer/codemoonbit/view",
+  "V1GreenSummer/codemoonbit/ffi",
 }
 
 supported_targets = "wasm-gc"
