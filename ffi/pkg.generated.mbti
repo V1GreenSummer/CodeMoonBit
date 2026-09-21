@@ -62,6 +62,8 @@ pub fn sb_new() -> Int
 
 pub fn sb_push(Int, Int) -> Unit
 
+pub fn sb_push_js(Int, JsAny) -> Unit
+
 pub fn scroll_height(JsAny) -> Double
 
 pub fn scroll_left(JsAny) -> Double
@@ -73,6 +75,8 @@ pub fn scroll_width(JsAny) -> Double
 pub fn set_attr(JsAny, JsAny, JsAny) -> Unit
 
 pub fn set_class(JsAny, JsAny) -> Unit
+
+pub fn set_cursor(JsAny, Double, Double, Double, Int) -> Unit
 
 pub fn set_html(JsAny, JsAny) -> Unit
 
@@ -97,6 +101,7 @@ pub fn JsStringBuilder::new() -> Self
 pub fn JsStringBuilder::push(Self, String) -> Unit
 pub fn JsStringBuilder::push_char(Self, Char) -> Unit
 pub fn JsStringBuilder::push_code(Self, Int) -> Unit
+pub fn JsStringBuilder::push_js(Self, JsAny) -> Unit
 
 // Type aliases
 

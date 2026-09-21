@@ -6,6 +6,7 @@ import {
   "codemoonbit/codemoonbit/input",
   "codemoonbit/codemoonbit/state",
   "codemoonbit/codemoonbit/view",
+  "moonbitlang/core/debug",
 }
 
 // Values
@@ -13,6 +14,13 @@ import {
 // Errors
 
 // Types and methods
+pub(all) struct Diagnostic {
+  from : Int
+  to : Int
+  severity : String
+  message : String
+} derive(Eq, @debug.Debug)
+
 pub struct Editor {
   // private fields
 }
@@ -40,9 +48,11 @@ pub fn Editor::search_next(Self) -> Unit
 pub fn Editor::search_prev(Self) -> Unit
 pub fn Editor::search_replace(Self, String) -> Unit
 pub fn Editor::selected_text(Self) -> @ffi.JsAny
+pub fn Editor::set_diagnostics(Self, Array[Diagnostic]) -> Unit
 pub fn Editor::set_doc(Self, String) -> Unit
 pub fn Editor::set_option(Self, String, String) -> Unit
 pub fn Editor::set_search_query(Self, String) -> Unit
+pub fn Editor::set_selection(Self, Int, Int) -> Unit
 pub fn Editor::state(Self) -> @state.EditorState
 pub fn Editor::toggle_fold(Self, Int) -> Unit
 pub fn Editor::undo(Self) -> Unit

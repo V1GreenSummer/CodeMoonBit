@@ -286,8 +286,7 @@ function buildPanel(panel) {
 
 function refreshContentSize(content) {
   let maxY = 0;
-  const inner = content.__cmInner || content;
-  const children = inner.children || [];
+  const children = content.children || [];
   for (let i = 0; i < children.length; i = i + 1) {
     const child = children[i];
     const style = child.style || {};
@@ -337,19 +336,22 @@ function createScaffold(container, editorId) {
     whiteSpace: "pre",
   });
   content.__cmRole = "content";
-  // Line markup lives in an inner container so the persistent caret overlay
-  // (a sibling) survives innerHTML replacement: the blink animation never
-  // restarts and the caret cannot flicker.
-  const inner = createEl("div");
-  inner.className = "cm-content-inner";
-  setStyles(inner, { position: "absolute", top: "0", left: "0" });
-  content.__cmInner = inner;
-  content.appendChild(inner);
+  // Persistent caret overlay: it lives in the scroller (not in `.cm-content`,
+  // which is replaced by `set_html`), so the blink animation never restarts
+  // and the caret cannot flicker.
+  const cursorLayer = createEl("div");
+  cursorLayer.className = "cm-cursor-layer";
+  setStyles(cursorLayer, {
+    position: "absolute",
+    top: "0",
+    left: content.style.left || "0px",
+    pointerEvents: "none",
+  });
+  scroller.appendChild(cursorLayer);
   const cursor = createEl("div");
-  cursor.className = "cm-cursor";
-  setStyles(cursor, { display: "none" });
+  cursor.className = "cm-cursor cm-cursor-hidden";
   content.__cmCursor = cursor;
-  content.appendChild(cursor);
+  cursorLayer.appendChild(cursor);
 
   const input = createEl("textarea");
   input.className = "cm-input";
@@ -1073,18 +1075,16 @@ export function createDomImports() {
     },
     set_html(element, html) {
       if (!element) return;
-      const target = element.__cmInner || element;
-      target.innerHTML = html == null ? "" : html;
+      element.innerHTML = html == null ? "" : html;
       if (element.__cmRole === "content") refreshContentSize(element);
     },
     set_cursor(element, x, y, height, visible) {
       const cursor = element && element.__cmCursor;
       if (!cursor) return;
-      const display = visible ? "block" : "none";
       const left = `${num(x)}px`;
       const top = `${num(y)}px`;
       const boxHeight = `${num(height)}px`;
-      if (cursor.style.display !== display) cursor.style.display = display;
+      cursor.classList.toggle("cm-cursor-hidden", !visible);
       if (cursor.style.left !== left) cursor.style.left = left;
       if (cursor.style.top !== top) cursor.style.top = top;
       if (cursor.style.height !== boxHeight) cursor.style.height = boxHeight;

@@ -37,6 +37,10 @@ pub fn cursor_line_up(@state.EditorState) -> @state.TransactionSpec
 
 pub fn cursor_visual_line_start(@state.EditorState) -> @state.TransactionSpec
 
+pub fn cursor_word_left(@state.EditorState) -> @state.TransactionSpec
+
+pub fn cursor_word_right(@state.EditorState) -> @state.TransactionSpec
+
 pub fn default_keymap() -> Array[KeyBinding]
 
 pub fn delete_char_backward(@state.EditorState) -> @state.TransactionSpec
@@ -85,6 +89,8 @@ pub let mod_shift : Int
 
 pub fn next_char_boundary(@core.Text, Int) -> Int
 
+pub fn next_word_boundary(@core.Text, Int) -> Int
+
 pub fn normalize_key_name(String) -> String
 
 pub fn page_down(@state.EditorState, lines? : Int) -> @state.TransactionSpec
@@ -92,6 +98,8 @@ pub fn page_down(@state.EditorState, lines? : Int) -> @state.TransactionSpec
 pub fn page_up(@state.EditorState, lines? : Int) -> @state.TransactionSpec
 
 pub fn prev_char_boundary(@core.Text, Int) -> Int
+
+pub fn prev_word_boundary(@core.Text, Int) -> Int
 
 pub fn redo_cmd(@state.EditorState) -> @state.TransactionSpec?
 
@@ -120,6 +128,10 @@ pub fn select_line_up(@state.EditorState) -> @state.TransactionSpec
 pub fn select_next_occurrence(@state.EditorState, selection_text~ : String) -> @state.TransactionSpec?
 
 pub fn select_next_occurrence_cmd(@state.EditorState) -> @state.TransactionSpec?
+
+pub fn select_word_left(@state.EditorState) -> @state.TransactionSpec
+
+pub fn select_word_right(@state.EditorState) -> @state.TransactionSpec
 
 pub fn toggle_line_comment(@state.EditorState, token? : String) -> @state.TransactionSpec
 

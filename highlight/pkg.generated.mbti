@@ -107,6 +107,8 @@ pub fn toml_language() -> Language
 
 pub fn typescript_language() -> Language
 
+pub fn typst_language() -> Language
+
 pub fn vue_language() -> Language
 
 pub fn xml_language() -> Language
@@ -121,6 +123,7 @@ pub struct HighlightCache {
 }
 pub fn HighlightCache::invalidate(Self, Int) -> Unit
 pub fn HighlightCache::new(Language) -> Self
+pub fn HighlightCache::tokens_and_state_for_line(Self, @core.Text, Int) -> (Int, Array[Token])
 pub fn HighlightCache::tokens_for_line(Self, @core.Text, Int) -> Array[Token]
 
 pub struct Language {

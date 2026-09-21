@@ -189,11 +189,20 @@
   position: absolute;
   width: 2px;
   background: var(--cm-cursor);
+  pointer-events: none;
   animation: cm-blink 1.06s steps(1) infinite;
 }
 
 .cm-editor:not(.cm-focused) .cm-cursor {
-  visibility: hidden;
+  display: none;
+}
+
+.cm-editor .cm-cursor.cm-cursor-hidden {
+  display: none;
+}
+
+.cm-editor .cm-cursor-layer {
+  pointer-events: none;
 }
 
 @keyframes cm-blink {

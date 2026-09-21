@@ -58,9 +58,13 @@ pub fn cm_search_replace_all(Int, @ffi.JsAny) -> Unit
 
 pub fn cm_selected_text(Int) -> @ffi.JsAny
 
+pub fn cm_set_diagnostics(Int, @ffi.JsAny) -> Unit
+
 pub fn cm_set_doc(Int, @ffi.JsAny) -> Unit
 
 pub fn cm_set_option(Int, @ffi.JsAny, @ffi.JsAny) -> Unit
+
+pub fn cm_set_selection(Int, Int, Int) -> Unit
 
 pub fn cm_undo(Int) -> Unit
 
