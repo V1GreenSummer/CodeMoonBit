@@ -3,6 +3,16 @@
 CodeMoonBit is a CodeMirror-like code editor written in MoonBit, compiled to
 `wasm-gc` and driven from JavaScript through DOM FFI.
 
+## Toolchain
+
+Requires `moonc >= 0.10.14` (`moon version --all`). The stable channel is
+older; install the development channel with:
+
+```sh
+export MOONBIT_INSTALL_DEV=1
+curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+```
+
 ## Build & test
 
 - `moon check --target wasm-gc` — type check everything.
