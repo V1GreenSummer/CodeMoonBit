@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/core"
+package "V1GreenSummer/codemoonbit/core"
 
 // Values
 
@@ -13,11 +13,13 @@ pub(all) struct Change {
 } derive(Eq)
 pub fn Change::delete(Int, Int) -> Self
 pub fn Change::delta(Self) -> Int
+pub fn Change::equal(Self, Self) -> Bool
 pub fn Change::insert(Int, String) -> Self
 pub fn Change::is_empty(Self) -> Bool
 pub fn Change::length(Self) -> Int
 pub fn Change::new(Int, Int, String) -> Self
 pub fn Change::new_length(Self) -> Int
+pub fn Change::not_equal(Self, Self) -> Bool
 
 pub(all) struct ChangeSet {
   // private fields
@@ -60,10 +62,14 @@ pub fn Range::contains(Self, Int) -> Bool
 pub fn Range::contains_range(Self, Self) -> Bool
 pub fn Range::empty(Int) -> Self
 pub fn Range::eq(Self, Self) -> Bool
+pub fn Range::equal(Self, Self) -> Bool
+pub fn Range::hash(Self) -> Int
+pub fn Range::hash_combine(Self, Hasher) -> Unit
 pub fn Range::is_empty(Self) -> Bool
 pub fn Range::length(Self) -> Int
 pub fn Range::map(Self, ChangeSet, assoc? : Int) -> Self
 pub fn Range::new(Int, Int) -> Self
+pub fn Range::not_equal(Self, Self) -> Bool
 pub fn Range::overlaps(Self, Self) -> Bool
 pub fn Range::touches(Self, Self) -> Bool
 
@@ -87,11 +93,15 @@ pub(all) struct SelectionRange {
 pub fn SelectionRange::as_range(Self) -> Range
 pub fn SelectionRange::cursor(Int) -> Self
 pub fn SelectionRange::eq(Self, Self) -> Bool
+pub fn SelectionRange::equal(Self, Self) -> Bool
 pub fn SelectionRange::from(Self) -> Int
+pub fn SelectionRange::hash(Self) -> Int
+pub fn SelectionRange::hash_combine(Self, Hasher) -> Unit
 pub fn SelectionRange::head_pos(Self) -> Int
 pub fn SelectionRange::is_empty(Self) -> Bool
 pub fn SelectionRange::length(Self) -> Int
 pub fn SelectionRange::new(Int, Int) -> Self
+pub fn SelectionRange::not_equal(Self, Self) -> Bool
 pub fn SelectionRange::to(Self) -> Int
 
 pub(all) struct Text {

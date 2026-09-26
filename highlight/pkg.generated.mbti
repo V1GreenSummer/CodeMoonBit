@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/highlight"
+package "V1GreenSummer/codemoonbit/highlight"
 
 import {
-  "codemoonbit/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/core",
   "moonbitlang/core/debug",
 }
 
@@ -141,6 +141,9 @@ pub struct Token {
   to : Int
   typ : TokenType
 } derive(Eq, @debug.Debug)
+pub fn Token::equal(Self, Self) -> Bool
+pub fn Token::not_equal(Self, Self) -> Bool
+pub fn Token::to_repr(Self) -> @debug.Repr
 
 pub enum TokenType {
   Keyword
@@ -158,6 +161,11 @@ pub enum TokenType {
   Attribute
   Invalid
 } derive(Eq, Hash, @debug.Debug)
+pub fn TokenType::equal(Self, Self) -> Bool
+pub fn TokenType::hash(Self) -> Int
+pub fn TokenType::hash_combine(Self, Hasher) -> Unit
+pub fn TokenType::not_equal(Self, Self) -> Bool
+pub fn TokenType::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

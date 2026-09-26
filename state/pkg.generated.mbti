@@ -1,8 +1,8 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/state"
+package "V1GreenSummer/codemoonbit/state"
 
 import {
-  "codemoonbit/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/core",
 }
 
 // Values
@@ -61,6 +61,7 @@ pub enum ExtItem {
 pub struct Extension {
   // private fields
 }
+pub fn Extension::add(Self, Self) -> Self
 pub fn Extension::empty() -> Self
 pub fn Extension::facet_items(Self) -> Array[(Int, () -> Unit, () -> () -> Unit)]
 pub fn Extension::fields(Self) -> Array[ErasedField]

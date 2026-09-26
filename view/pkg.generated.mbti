@@ -1,10 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/view"
+package "V1GreenSummer/codemoonbit/view"
 
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/ffi",
-  "codemoonbit/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/ffi",
+  "V1GreenSummer/codemoonbit/state",
 }
 
 // Values

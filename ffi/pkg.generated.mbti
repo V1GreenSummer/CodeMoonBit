@@ -1,5 +1,5 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/ffi"
+package "V1GreenSummer/codemoonbit/ffi"
 
 // Values
 pub fn add_class(JsAny, JsAny) -> Unit

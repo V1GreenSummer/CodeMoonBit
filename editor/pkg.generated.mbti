@@ -1,11 +1,11 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/editor"
+package "V1GreenSummer/codemoonbit/editor"
 
 import {
-  "codemoonbit/codemoonbit/ffi",
-  "codemoonbit/codemoonbit/input",
-  "codemoonbit/codemoonbit/state",
-  "codemoonbit/codemoonbit/view",
+  "V1GreenSummer/codemoonbit/ffi",
+  "V1GreenSummer/codemoonbit/input",
+  "V1GreenSummer/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/view",
   "moonbitlang/core/debug",
 }
 
@@ -20,6 +20,9 @@ pub(all) struct Diagnostic {
   severity : String
   message : String
 } derive(Eq, @debug.Debug)
+pub fn Diagnostic::equal(Self, Self) -> Bool
+pub fn Diagnostic::not_equal(Self, Self) -> Bool
+pub fn Diagnostic::to_repr(Self) -> @debug.Repr
 
 pub struct Editor {
   // private fields

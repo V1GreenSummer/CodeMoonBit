@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/search"
+package "V1GreenSummer/codemoonbit/search"
 
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/state",
 }
 
 // Values
@@ -68,6 +68,8 @@ pub struct FoldRange {
   from_line : Int
   to_line : Int
 } derive(Eq)
+pub fn FoldRange::equal(Self, Self) -> Bool
+pub fn FoldRange::not_equal(Self, Self) -> Bool
 
 pub struct FoldState {
   folded : Array[FoldRange]
@@ -80,7 +82,9 @@ pub struct SearchQuery {
   whole_word : Bool
   regex : Bool
 } derive(Eq)
+pub fn SearchQuery::equal(Self, Self) -> Bool
 pub fn SearchQuery::new(text~ : String, case_sensitive? : Bool, whole_word? : Bool, regex? : Bool) -> Self
+pub fn SearchQuery::not_equal(Self, Self) -> Bool
 
 pub struct SearchState {
   open : Bool

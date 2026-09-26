@@ -1,9 +1,9 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "codemoonbit/codemoonbit/input"
+package "V1GreenSummer/codemoonbit/input"
 
 import {
-  "codemoonbit/codemoonbit/core",
-  "codemoonbit/codemoonbit/state",
+  "V1GreenSummer/codemoonbit/core",
+  "V1GreenSummer/codemoonbit/state",
 }
 
 // Values
@@ -151,6 +151,8 @@ pub(all) struct KeyEvent {
   code : String
   mods : Int
 } derive(Eq)
+pub fn KeyEvent::equal(Self, Self) -> Bool
+pub fn KeyEvent::not_equal(Self, Self) -> Bool
 
 pub struct Keymap {
   // private fields
