@@ -8,13 +8,16 @@ pub struct SearchQuery {
 } derive(Eq)
 
 ///|
+pub extend SearchQuery with Eq::{not_equal, equal}
+
+///|
 pub fn SearchQuery::new(
   text~ : String,
   case_sensitive? : Bool = false,
   whole_word? : Bool = false,
   regex? : Bool = false,
 ) -> SearchQuery {
-  { text, case_sensitive, whole_word, regex }
+  { text, case_sensitive, whole_word, regex, }
 }
 
 ///|

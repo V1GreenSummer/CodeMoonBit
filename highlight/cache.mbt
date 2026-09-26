@@ -9,7 +9,7 @@ pub struct HighlightCache {
 
 ///|
 pub fn HighlightCache::new(language : Language) -> HighlightCache {
-  { language, states: [], lines: [] }
+  { language, states: [], lines: [], }
 }
 
 ///|

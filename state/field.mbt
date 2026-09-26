@@ -12,7 +12,7 @@ pub fn[T] StateField::new(
   init~ : (EditorState) -> T,
   update? : (T, Transaction) -> T,
 ) -> StateField[T] {
-  { id: fresh_state_id(), init, update, holder: None }
+  { id: fresh_state_id(), init, update, holder: None, }
 }
 
 ///|
@@ -49,7 +49,7 @@ fn[T] StateField::erase(self : StateField[T]) -> ErasedField {
       })
     None => None
   }
-  { id: self.id, init_slot, update_slot }
+  { id: self.id, init_slot, update_slot, }
 }
 
 ///|

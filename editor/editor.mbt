@@ -8,6 +8,12 @@ pub(all) struct Diagnostic {
 } derive(Debug, Eq)
 
 ///|
+pub extend Diagnostic with Debug::{to_repr}
+
+///|
+pub extend Diagnostic with Eq::{not_equal, equal}
+
+///|
 /// A high-level editor instance bound to a DOM container.
 pub struct Editor {
   priv view : @view.EditorView

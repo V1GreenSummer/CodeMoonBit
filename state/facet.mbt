@@ -1,6 +1,6 @@
 ///|
 /// Monotonic id generator shared by facets, fields and effects.
-let next_state_id : Ref[Int] = { val: 0 }
+let next_state_id : Ref[Int] = { val: 0, }
 
 ///|
 pub fn fresh_state_id() -> Int {

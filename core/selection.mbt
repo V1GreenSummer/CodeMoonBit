@@ -6,13 +6,19 @@ pub(all) struct SelectionRange {
 } derive(Eq, Hash)
 
 ///|
+pub extend SelectionRange with Eq::{not_equal, equal}
+
+///|
+pub extend SelectionRange with Hash::{hash, hash_combine}
+
+///|
 pub fn SelectionRange::new(anchor : Int, head : Int) -> SelectionRange {
-  { anchor, head }
+  { anchor, head, }
 }
 
 ///|
 pub fn SelectionRange::cursor(pos : Int) -> SelectionRange {
-  { anchor: pos, head: pos }
+  { anchor: pos, head: pos, }
 }
 
 ///|
@@ -79,7 +85,7 @@ pub fn EditorSelection::create(
   main : Int,
 ) -> EditorSelection {
   if ranges.length() == 0 {
-    return { ranges: [SelectionRange::cursor(0)], main: 0 }
+    return { ranges: [SelectionRange::cursor(0)], main: 0, }
   }
   let m = if main < 0 {
     0
@@ -88,7 +94,7 @@ pub fn EditorSelection::create(
   } else {
     main
   }
-  { ranges, main: m }
+  { ranges, main: m, }
 }
 
 ///|
@@ -176,7 +182,7 @@ pub fn EditorSelection::map(
       head: changes.map_pos(r.head, assoc),
     })
   }
-  { ranges: mapped, main: self.main }
+  { ranges: mapped, main: self.main, }
 }
 
 ///|
@@ -200,7 +206,7 @@ pub fn EditorSelection::normalized(self : EditorSelection) -> EditorSelection {
       if prev.to() >= r.from() {
         if r.to() > prev.to() {
           let _ = result.pop()
-          result.push({ anchor: prev.anchor, head: r.head })
+          result.push({ anchor: prev.anchor, head: r.head, })
         }
         merged = true
       }

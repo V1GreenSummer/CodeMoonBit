@@ -77,7 +77,7 @@ pub let search_field : @state.StateField[SearchState] = @state.StateField::new(
     } else {
       current
     }
-    { open, query, matches, current: clamped, replace_text }
+    { open, query, matches, current: clamped, replace_text, }
   },
 )
 

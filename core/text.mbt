@@ -9,7 +9,7 @@ pub(all) struct Text {
 
 ///|
 pub fn Text::empty() -> Text {
-  { lines: [""], starts: [0], len: 0 }
+  { lines: [""], starts: [0], len: 0, }
 }
 
 ///|
@@ -24,7 +24,7 @@ pub fn Text::of(content : String) -> Text {
   if lines.length() > 0 {
     len = len - 1
   }
-  { lines, starts, len }
+  { lines, starts, len, }
 }
 
 ///|
@@ -169,7 +169,7 @@ pub fn Text::slice(self : Text, from : Int, to : Int) -> String {
   if fl == tl {
     return self.lines[fl][fc:tc].to_owned()
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(self.lines[fl][fc:].to_owned())
   for i = fl + 1; i < tl; i = i + 1 {
     buf.write_char('\n')
@@ -223,7 +223,7 @@ pub fn Text::to_string(self : Text) -> String {
   if self.lines.length() == 1 {
     return self.lines[0]
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string(self.lines[0])
   for i = 1; i < self.lines.length(); i = i + 1 {
     buf.write_char('\n')
@@ -281,7 +281,7 @@ pub fn Text::replace(self : Text, from : Int, to : Int, text : String) -> Text {
     len = len + line.length() + 1
   }
   len = len - 1
-  { lines: new_lines, starts: new_starts, len }
+  { lines: new_lines, starts: new_starts, len, }
 }
 
 ///|

@@ -237,9 +237,9 @@ test "page up and down" {
 
 ///|
 test "binding spec normalization" {
-  let e : KeyEvent = { key: "z", code: "KeyZ", mods: mod_ctrl | mod_shift }
+  let e : KeyEvent = { key: "z", code: "KeyZ", mods: mod_ctrl | mod_shift, }
   assert_eq(binding_spec(e), "Shift-Ctrl-z")
-  let e2 : KeyEvent = { key: "A", code: "KeyA", mods: mod_shift }
+  let e2 : KeyEvent = { key: "A", code: "KeyA", mods: mod_shift, }
   assert_eq(binding_spec(e2), "Shift-a")
   let e3 : KeyEvent = {
     key: "ArrowUp",
@@ -247,9 +247,9 @@ test "binding spec normalization" {
     mods: mod_alt | mod_shift,
   }
   assert_eq(binding_spec(e3), "Shift-Alt-ArrowUp")
-  let e4 : KeyEvent = { key: " ", code: "Space", mods: 0 }
+  let e4 : KeyEvent = { key: " ", code: "Space", mods: 0, }
   assert_eq(binding_spec(e4), "Space")
-  let e5 : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta }
+  let e5 : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta, }
   assert_eq(binding_spec(e5), "Meta-a")
 }
 
@@ -260,17 +260,17 @@ test "keymap matches modifiers and Mod" {
     key_binding(key="Ctrl-Shift-z", run=some(select_all_cmd)),
     key_binding(key="Mod-y", run=some(cursor_doc_end)),
   ])
-  let e : KeyEvent = { key: "z", code: "KeyZ", mods: mod_ctrl | mod_shift }
+  let e : KeyEvent = { key: "z", code: "KeyZ", mods: mod_ctrl | mod_shift, }
   let st2 = st.apply(km.run(st, e).unwrap())
   assert_eq(st2.selection().main_range().head, 5)
-  let ey : KeyEvent = { key: "y", code: "KeyY", mods: mod_ctrl }
+  let ey : KeyEvent = { key: "y", code: "KeyY", mods: mod_ctrl, }
   let st3 = st.apply(km.run(st, ey).unwrap())
   assert_eq(st3.selection().main_range().head, 5)
-  let plain_y : KeyEvent = { key: "y", code: "KeyY", mods: 0 }
+  let plain_y : KeyEvent = { key: "y", code: "KeyY", mods: 0, }
   assert_true(km.run(st, plain_y) is None)
-  let meta_y : KeyEvent = { key: "y", code: "KeyY", mods: mod_meta }
+  let meta_y : KeyEvent = { key: "y", code: "KeyY", mods: mod_meta, }
   assert_true(km.run(st, meta_y) is None)
-  let alt_y : KeyEvent = { key: "y", code: "KeyY", mods: mod_alt }
+  let alt_y : KeyEvent = { key: "y", code: "KeyY", mods: mod_alt, }
   assert_true(km.run(st, alt_y) is None)
 }
 
@@ -278,11 +278,15 @@ test "keymap matches modifiers and Mod" {
 test "platform mod matches meta instead of ctrl" {
   let st = cursor_state("abc", 1)
   let km = Keymap::new().add(key_binding(key="Mod-a", run=some(select_all_cmd)))
-  let mac : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta | mod_platform }
+  let mac : KeyEvent = {
+    key: "a",
+    code: "KeyA",
+    mods: mod_meta | mod_platform,
+  }
   let st2 = st.apply(km.run(st, mac).unwrap())
   assert_eq(st2.selection().main_range().anchor, 0)
   assert_eq(st2.selection().main_range().head, 3)
-  let plain_meta : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta }
+  let plain_meta : KeyEvent = { key: "a", code: "KeyA", mods: mod_meta, }
   assert_true(km.run(st, plain_meta) is None)
   let mac_ctrl : KeyEvent = {
     key: "a",
@@ -290,7 +294,7 @@ test "platform mod matches meta instead of ctrl" {
     mods: mod_ctrl | mod_platform,
   }
   assert_true(km.run(st, mac_ctrl) is None)
-  let ctrl : KeyEvent = { key: "a", code: "KeyA", mods: mod_ctrl }
+  let ctrl : KeyEvent = { key: "a", code: "KeyA", mods: mod_ctrl, }
   let st3 = st.apply(km.run(st, ctrl).unwrap())
   assert_eq(st3.selection().main_range().head, 3)
 }
@@ -326,13 +330,13 @@ test "default keymap forwards the configured indent" {
     doc=@core.Text::of("ab"),
     selection=@core.EditorSelection::cursor(0),
   )
-  let tab : KeyEvent = { key: "Tab", code: "Tab", mods: 0 }
+  let tab : KeyEvent = { key: "Tab", code: "Tab", mods: 0, }
   let st2 = st.apply(run_keymap_facet(st, tab).unwrap())
   assert_eq(st2.to_string(), "  ab")
-  let bracket : KeyEvent = { key: "]", code: "BracketRight", mods: mod_ctrl }
+  let bracket : KeyEvent = { key: "]", code: "BracketRight", mods: mod_ctrl, }
   let st3 = st.apply(run_keymap_facet(st, bracket).unwrap())
   assert_eq(st3.to_string(), "  ab")
-  let close : KeyEvent = { key: "[", code: "BracketLeft", mods: mod_ctrl }
+  let close : KeyEvent = { key: "[", code: "BracketLeft", mods: mod_ctrl, }
   let st4 = st3.apply(run_keymap_facet(st3, close).unwrap())
   assert_eq(st4.to_string(), "ab")
 }
@@ -346,7 +350,7 @@ test "keymap shift variant" {
   }
   let km = Keymap::new().add(custom)
   let st = cursor_state("ab", 1)
-  let ev : KeyEvent = { key: "Enter", code: "Enter", mods: mod_shift }
+  let ev : KeyEvent = { key: "Enter", code: "Enter", mods: mod_shift, }
   let st2 = st.apply(km.run(st, ev).unwrap())
   assert_eq(st2.to_string(), "a;b")
 }
@@ -354,7 +358,7 @@ test "keymap shift variant" {
 ///|
 test "run keymap facet falls back to defaults" {
   let st = cursor_state("abc", 1)
-  let ev : KeyEvent = { key: "ArrowRight", code: "ArrowRight", mods: 0 }
+  let ev : KeyEvent = { key: "ArrowRight", code: "ArrowRight", mods: 0, }
   let st2 = st.apply(run_keymap_facet(st, ev).unwrap())
   assert_eq(st2.selection().main_range().head, 2)
   let shift_ev : KeyEvent = {
@@ -365,12 +369,12 @@ test "run keymap facet falls back to defaults" {
   let st3 = st2.apply(run_keymap_facet(st2, shift_ev).unwrap())
   assert_eq(st3.selection().main_range().anchor, 2)
   assert_eq(st3.selection().main_range().head, 1)
-  let enter : KeyEvent = { key: "Enter", code: "Enter", mods: 0 }
+  let enter : KeyEvent = { key: "Enter", code: "Enter", mods: 0, }
   let st4 = st.apply(run_keymap_facet(st, enter).unwrap())
   assert_eq(st4.to_string(), "a\nbc")
-  let escape : KeyEvent = { key: "Escape", code: "Escape", mods: 0 }
+  let escape : KeyEvent = { key: "Escape", code: "Escape", mods: 0, }
   assert_true(run_keymap_facet(st, escape) is None)
-  let backspace : KeyEvent = { key: "Backspace", code: "Backspace", mods: 0 }
+  let backspace : KeyEvent = { key: "Backspace", code: "Backspace", mods: 0, }
   let st5 = st.apply(run_keymap_facet(st, backspace).unwrap())
   assert_eq(st5.to_string(), "bc")
 }
@@ -385,11 +389,11 @@ test "run keymap facet uses configured keymap" {
     doc=@core.Text::of("abc"),
     selection=@core.EditorSelection::cursor(1),
   )
-  let ev : KeyEvent = { key: "a", code: "KeyA", mods: mod_ctrl }
+  let ev : KeyEvent = { key: "a", code: "KeyA", mods: mod_ctrl, }
   let st2 = st.apply(run_keymap_facet(st, ev).unwrap())
   assert_eq(st2.selection().main_range().anchor, 0)
   assert_eq(st2.selection().main_range().head, 3)
-  let right : KeyEvent = { key: "ArrowRight", code: "ArrowRight", mods: 0 }
+  let right : KeyEvent = { key: "ArrowRight", code: "ArrowRight", mods: 0, }
   assert_true(run_keymap_facet(st, right) is None)
 }
 

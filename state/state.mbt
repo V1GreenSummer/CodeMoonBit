@@ -59,7 +59,7 @@ pub fn EditorState::create(
     }
     field_slots[i] = (fields[i].init_slot)(partial)
   }
-  { doc: text, selection: sel, fields, field_slots, facet_slots, extensions }
+  { doc: text, selection: sel, fields, field_slots, facet_slots, extensions, }
 }
 
 ///|

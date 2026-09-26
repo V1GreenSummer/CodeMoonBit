@@ -5,17 +5,23 @@ pub(all) struct Range {
 } derive(Eq, Hash)
 
 ///|
+pub extend Range with Eq::{not_equal, equal}
+
+///|
+pub extend Range with Hash::{hash, hash_combine}
+
+///|
 pub fn Range::new(from : Int, to : Int) -> Range {
   if from <= to {
-    { from, to }
+    { from, to, }
   } else {
-    { from: to, to: from }
+    { from: to, to: from, }
   }
 }
 
 ///|
 pub fn Range::empty(pos : Int) -> Range {
-  { from: pos, to: pos }
+  { from: pos, to: pos, }
 }
 
 ///|
@@ -66,7 +72,7 @@ pub(all) struct RangeSet {
 
 ///|
 pub fn RangeSet::empty() -> RangeSet {
-  { ranges: [] }
+  { ranges: [], }
 }
 
 ///|
@@ -88,12 +94,12 @@ pub fn RangeSet::of(ranges : Array[Range]) -> RangeSet {
       Some(prev) if prev.to >= r.from =>
         if r.to > prev.to {
           let _ = result.pop()
-          result.push({ from: prev.from, to: r.to })
+          result.push({ from: prev.from, to: r.to, })
         }
       _ => result.push(r)
     }
   }
-  { ranges: result }
+  { ranges: result, }
 }
 
 ///|
@@ -132,7 +138,7 @@ pub fn RangeSet::between(self : RangeSet, from : Int, to : Int) -> Array[Range] 
       break
     }
     if r.to >= from {
-      result.push({ from: r.from.max(from), to: r.to.min(to) })
+      result.push({ from: r.from.max(from), to: r.to.min(to), })
     }
   }
   result

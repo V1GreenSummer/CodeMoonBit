@@ -45,7 +45,7 @@ pub fn push_js_string(sb : Int, s : JsAny) -> Unit {
 ///|
 pub fn read_js_string(s : JsAny) -> String {
   let n = js_len(s)
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < n; i = i + 1 {
     buf.write_char(Int::unsafe_to_char(js_char(s, i)))
   }
@@ -67,7 +67,7 @@ pub struct JsStringBuilder {
 
 ///|
 pub fn JsStringBuilder::new() -> JsStringBuilder {
-  { handle: sb_new() }
+  { handle: sb_new(), }
 }
 
 ///|

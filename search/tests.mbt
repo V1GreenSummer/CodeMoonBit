@@ -436,7 +436,7 @@ test "fold field update replaces folds" {
   let st0 = @state.EditorState::create(config=[fold_field.extension()], doc~)
   let st1 = st0.apply(
     @state.TransactionSpec::new(effects=[
-      set_folds_effect.of([FoldRange::{ from_line: 0, to_line: 2 }]),
+      set_folds_effect.of([FoldRange::{ from_line: 0, to_line: 2, }]),
     ]),
   )
   assert_eq(st1.field(fold_field).folded.length(), 1)

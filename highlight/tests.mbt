@@ -27,19 +27,19 @@ test "json token classification" {
   )
   assert_eq(state, 0)
   let expected = [
-    Token::{ from: 0, to: 1, typ: Punctuation },
-    Token::{ from: 1, to: 6, typ: PropertyName },
-    Token::{ from: 6, to: 7, typ: Punctuation },
-    Token::{ from: 8, to: 12, typ: Atom },
-    Token::{ from: 12, to: 13, typ: Punctuation },
-    Token::{ from: 14, to: 17, typ: PropertyName },
-    Token::{ from: 17, to: 18, typ: Punctuation },
-    Token::{ from: 19, to: 25, typ: Number },
-    Token::{ from: 25, to: 26, typ: Punctuation },
-    Token::{ from: 27, to: 30, typ: PropertyName },
-    Token::{ from: 30, to: 31, typ: Punctuation },
-    Token::{ from: 32, to: 38, typ: String },
-    Token::{ from: 38, to: 39, typ: Punctuation },
+    Token::{ from: 0, to: 1, typ: Punctuation, },
+    Token::{ from: 1, to: 6, typ: PropertyName, },
+    Token::{ from: 6, to: 7, typ: Punctuation, },
+    Token::{ from: 8, to: 12, typ: Atom, },
+    Token::{ from: 12, to: 13, typ: Punctuation, },
+    Token::{ from: 14, to: 17, typ: PropertyName, },
+    Token::{ from: 17, to: 18, typ: Punctuation, },
+    Token::{ from: 19, to: 25, typ: Number, },
+    Token::{ from: 25, to: 26, typ: Punctuation, },
+    Token::{ from: 27, to: 30, typ: PropertyName, },
+    Token::{ from: 30, to: 31, typ: Punctuation, },
+    Token::{ from: 32, to: 38, typ: String, },
+    Token::{ from: 38, to: 39, typ: Punctuation, },
   ]
   assert_eq(tokens, expected)
 }

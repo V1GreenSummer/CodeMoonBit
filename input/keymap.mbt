@@ -29,6 +29,9 @@ pub(all) struct KeyEvent {
 } derive(Eq)
 
 ///|
+pub extend KeyEvent with Eq::{not_equal, equal}
+
+///|
 /// A named command bound to a normalized key spec such as `"Ctrl-z"` or
 /// `"Shift-Alt-ArrowUp"`. `shift` is an optional variant run when shift is
 /// held and the plain binding matched.
@@ -46,17 +49,17 @@ pub struct Keymap {
 
 ///|
 pub fn Keymap::new() -> Keymap {
-  { bindings: [] }
+  { bindings: [], }
 }
 
 ///|
 pub fn Keymap::bind(self : Keymap, bindings : Array[KeyBinding]) -> Keymap {
-  { bindings: self.bindings + bindings }
+  { bindings: self.bindings + bindings, }
 }
 
 ///|
 pub fn Keymap::add(self : Keymap, binding : KeyBinding) -> Keymap {
-  { bindings: self.bindings + [binding] }
+  { bindings: self.bindings + [binding], }
 }
 
 ///|
@@ -80,7 +83,7 @@ pub fn normalize_key_name(key : String) -> String {
 ///|
 /// Builds the canonical spec string for an event, e.g. `"Shift-Ctrl-Alt-Meta-z"`.
 pub fn binding_spec(event : KeyEvent) -> String {
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   if (event.mods & mod_shift) != 0 {
     sb.write_string("Shift-")
   }
@@ -205,7 +208,7 @@ pub fn key_binding(
   key~ : String,
   run~ : (@state.EditorState) -> @state.TransactionSpec?,
 ) -> KeyBinding {
-  { key, run, shift: fn(_) { None } }
+  { key, run, shift: fn(_) { None }, }
 }
 
 ///|

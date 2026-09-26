@@ -7,6 +7,9 @@ pub struct FoldRange {
 } derive(Eq)
 
 ///|
+pub extend FoldRange with Eq::{not_equal, equal}
+
+///|
 /// The set of currently collapsed line ranges.
 pub struct FoldState {
   folded : Array[FoldRange]
@@ -14,7 +17,7 @@ pub struct FoldState {
 
 ///|
 pub fn FoldState::empty() -> FoldState {
-  { folded: [] }
+  { folded: [], }
 }
 
 ///|
@@ -26,7 +29,7 @@ pub let fold_field : @state.StateField[FoldState] = @state.StateField::new(
   init=fn(_) { FoldState::empty() },
   update=fn(old, tr) {
     match tr.effect(set_folds_effect) {
-      Some(folds) => { folded: folds }
+      Some(folds) => { folded: folds, }
       None =>
         {
           folded: map_folds(
@@ -70,7 +73,7 @@ fn map_folds(
     let from_line = new_doc.line_at(from_pos)
     let to_line = new_doc.line_at(to_pos)
     if from_line < to_line {
-      result.push({ from_line, to_line })
+      result.push({ from_line, to_line, })
     }
   }
   normalize_folds(result)
@@ -187,7 +190,7 @@ pub fn compute_folds(
       }
     }
     if last > line {
-      folds.push({ from_line: line, to_line: last })
+      folds.push({ from_line: line, to_line: last, })
     }
   }
   let stack : Array[(Int, Int, Int)] = []
@@ -221,7 +224,7 @@ pub fn compute_folds(
             if top_pair == pair_index {
               let _ = stack.pop()
               if line > top_line {
-                folds.push({ from_line: top_line, to_line: line })
+                folds.push({ from_line: top_line, to_line: line, })
               }
             }
           }

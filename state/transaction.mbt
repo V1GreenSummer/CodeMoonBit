@@ -24,7 +24,7 @@ pub struct StateEffect[T] {
 
 ///|
 pub fn[T] StateEffect::new() -> StateEffect[T] {
-  { id: fresh_state_id(), holder: None }
+  { id: fresh_state_id(), holder: None, }
 }
 
 ///|
@@ -35,7 +35,7 @@ pub fn[T] StateEffect::id(self : StateEffect[T]) -> Int {
 ///|
 pub fn[T] StateEffect::of(self : StateEffect[T], value : T) -> EffectEntry {
   let effect = self
-  { id: self.id, read: fn() { effect.holder = Some(value) } }
+  { id: self.id, read: fn() { effect.holder = Some(value) }, }
 }
 
 ///|
@@ -55,7 +55,7 @@ pub fn TransactionSpec::new(
   annotations? : Array[Annotation] = [],
   scroll_into_view? : Bool,
 ) -> TransactionSpec {
-  { changes, selection, effects, annotations, scroll_into_view }
+  { changes, selection, effects, annotations, scroll_into_view, }
 }
 
 ///|

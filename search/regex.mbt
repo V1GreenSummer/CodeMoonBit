@@ -57,7 +57,7 @@ priv struct RegexParser {
 
 ///|
 fn RegexParser::new(pattern : String) -> RegexParser {
-  { pattern, index: 0, failed: false }
+  { pattern, index: 0, failed: false, }
 }
 
 ///|
@@ -301,7 +301,7 @@ priv struct RegexMatcher {
 
 ///|
 fn RegexMatcher::new(content : String, case_sensitive : Bool) -> RegexMatcher {
-  { content, length: content.length(), case_sensitive }
+  { content, length: content.length(), case_sensitive, }
 }
 
 ///|
@@ -436,7 +436,7 @@ fn find_regex_matches(
       let length = content.length()
       let mut start = 0
       while start <= length && (limit <= 0 || result.length() < limit) {
-        let end_ref : Ref[Int] = { val: -1 }
+        let end_ref : Ref[Int] = { val: -1, }
         let matched = matcher.match_here(re, start, fn(pos) {
           end_ref.val = pos
           true

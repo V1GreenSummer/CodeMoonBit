@@ -26,7 +26,7 @@ fn typst_keyword(word : String) -> Bool {
 
 ///|
 fn typst_slice(line : String, from : Int, to : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let n = line.length()
   let mut i = from
   let end = if to > n { n } else { to }

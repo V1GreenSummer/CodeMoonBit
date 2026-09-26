@@ -13,12 +13,12 @@ pub struct Extension {
 
 ///|
 pub fn Extension::empty() -> Extension {
-  { items: [] }
+  { items: [], }
 }
 
 ///|
 pub fn Extension::single(item : ExtItem) -> Extension {
-  { items: [item] }
+  { items: [item], }
 }
 
 ///|
@@ -41,8 +41,11 @@ pub fn Extension::size(self : Extension) -> Int {
 }
 
 ///|
+pub extend Extension with Add::{add}
+
+///|
 pub impl Add for Extension with fn add(self : Extension, other : Extension) -> Extension {
-  { items: self.items + other.items }
+  { items: self.items + other.items, }
 }
 
 ///|

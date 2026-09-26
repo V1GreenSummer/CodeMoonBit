@@ -8,22 +8,25 @@ pub(all) struct Change {
 } derive(Eq)
 
 ///|
+pub extend Change with Eq::{not_equal, equal}
+
+///|
 pub fn Change::new(from : Int, to : Int, text : String) -> Change {
   if from <= to {
-    { from, to, text }
+    { from, to, text, }
   } else {
-    { from: to, to: from, text }
+    { from: to, to: from, text, }
   }
 }
 
 ///|
 pub fn Change::insert(pos : Int, text : String) -> Change {
-  { from: pos, to: pos, text }
+  { from: pos, to: pos, text, }
 }
 
 ///|
 pub fn Change::delete(from : Int, to : Int) -> Change {
-  { from, to, text: "" }
+  { from, to, text: "", }
 }
 
 ///|
@@ -55,7 +58,7 @@ pub(all) struct ChangeSet {
 
 ///|
 pub fn ChangeSet::empty() -> ChangeSet {
-  { changes: [] }
+  { changes: [], }
 }
 
 ///|
@@ -75,7 +78,7 @@ pub fn ChangeSet::of(changes : Array[Change]) -> ChangeSet {
     }
     result.push(c)
   }
-  { changes: result }
+  { changes: result, }
 }
 
 ///|
@@ -119,10 +122,10 @@ pub fn ChangeSet::invert(self : ChangeSet, text : Text) -> ChangeSet {
   for c in self.changes {
     let pos = c.from + delta
     let old = text.slice(c.from, c.to)
-    inverted.push({ from: pos, to: pos + c.text.length(), text: old })
+    inverted.push({ from: pos, to: pos + c.text.length(), text: old, })
     delta = delta + c.delta()
   }
-  { changes: inverted }
+  { changes: inverted, }
 }
 
 ///|
@@ -170,9 +173,9 @@ pub fn ChangeSet::map_range(
   let from = self.map_pos(range.from, -1)
   let to = self.map_pos(range.to, assoc)
   if from <= to {
-    { from, to }
+    { from, to, }
   } else {
-    { from: to, to: from }
+    { from: to, to: from, }
   }
 }
 

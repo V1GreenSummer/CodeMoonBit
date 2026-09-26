@@ -9,7 +9,7 @@ priv struct Scanner {
 
 ///|
 fn Scanner::new(line : String) -> Scanner {
-  { line, len: line.length(), pos: 0, tokens: [] }
+  { line, len: line.length(), pos: 0, tokens: [], }
 }
 
 ///|
@@ -55,7 +55,7 @@ fn Scanner::advance(self : Scanner) -> Int {
 ///|
 fn Scanner::push(self : Scanner, from : Int, to : Int, typ : TokenType) -> Unit {
   if to > from {
-    self.tokens.push({ from, to, typ })
+    self.tokens.push({ from, to, typ, })
   }
 }
 

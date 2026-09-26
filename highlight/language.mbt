@@ -5,7 +5,7 @@ fn plain_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
   if line.length() == 0 {
     ([], 0)
   } else {
-    ([{ from: 0, to: line.length(), typ: VariableName }], 0)
+    ([{ from: 0, to: line.length(), typ: VariableName, }], 0)
   }
 }
 

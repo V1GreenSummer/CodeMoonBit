@@ -186,7 +186,7 @@ fn EditorView::char_width(self : EditorView, code : Int) -> Double {
   match self.char_widths.get(code) {
     Some(w) => w
     None => {
-      let s = StringBuilder::new()
+      let s = StringBuilder()
       s.write_char(Int::unsafe_to_char(code))
       let w = @ffi.measure_text(self.options.font, s.to_string())
       self.char_widths.set(code, w)
@@ -219,7 +219,7 @@ fn EditorView::layout_line(self : EditorView, line : Int) -> LineLayout {
       let next = s.unsafe_get(i + 1).to_int()
       if next >= 0xDC00 && next <= 0xDFFF {
         xs[i + 1] = x
-        let pair = StringBuilder::new()
+        let pair = StringBuilder()
         pair.write_char(Int::unsafe_to_char(code))
         pair.write_char(Int::unsafe_to_char(next))
         x = x + @ffi.measure_text(self.options.font, pair.to_string())
@@ -234,7 +234,7 @@ fn EditorView::layout_line(self : EditorView, line : Int) -> LineLayout {
     }
   }
   xs[n] = x
-  { xs, width: x }
+  { xs, width: x, }
 }
 
 ///|
@@ -369,7 +369,7 @@ fn token_name(typ : @highlight.TokenType) -> String {
 
 ///|
 fn EditorView::decoration_classes(self : EditorView, line : Int) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for d in self.decorations {
     match d {
       Line(l, cls) =>
@@ -804,7 +804,9 @@ pub fn EditorView::render(self : EditorView) -> Unit {
       Some(html) => html
       None => {
         let starts = self.segment_starts(line)
-        let built = self.build_line_html(line, top, main_line, text, tokens, starts)
+        let built = self.build_line_html(
+          line, top, main_line, text, tokens, starts,
+        )
         self.put_line_html(line, signature, built)
         built
       }
@@ -1021,9 +1023,9 @@ pub fn EditorView::apply_spec(
 pub fn EditorView::set_doc(self : EditorView, text : String) -> Unit {
   self.invalidate_render_cache()
   self.host_edit = true
-  let changes = @core.ChangeSet::of(
-    [@core.Change::new(0, self.state.length(), text)],
-  )
+  let changes = @core.ChangeSet::of([
+    @core.Change::new(0, self.state.length(), text),
+  ])
   let spec = @state.TransactionSpec::new(
     changes~,
     selection=@core.EditorSelection::cursor(0),

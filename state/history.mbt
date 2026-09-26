@@ -17,7 +17,7 @@ pub(all) struct HistoryState {
 
 ///|
 pub fn HistoryState::empty() -> HistoryState {
-  { done: [], undone: [] }
+  { done: [], undone: [], }
 }
 
 ///|
@@ -123,7 +123,7 @@ pub let history_field : StateField[HistoryState] = StateField::new(
     // A non-history document change cannot be rebased against stale snapshot
     // diffs, so drop all existing groups instead of corrupting undo.
     if tr.is_remote() || !tr.add_to_history() {
-      return { done: [], undone: [] }
+      return { done: [], undone: [], }
     }
     let event = match tr.user_event() {
       Some(e) => e
@@ -150,10 +150,10 @@ pub let history_field : StateField[HistoryState] = StateField::new(
           event: last.event,
           count: last.count + 1,
         })
-        return { done, undone: [] }
+        return { done, undone: [], }
       }
     }
-    { done: push_group(old.done, group), undone: [] }
+    { done: push_group(old.done, group), undone: [], }
   },
 )
 

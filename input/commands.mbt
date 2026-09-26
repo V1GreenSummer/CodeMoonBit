@@ -91,7 +91,7 @@ fn spaces(count : Int) -> String {
   if count <= 0 {
     return ""
   }
-  let sb = StringBuilder::new()
+  let sb = StringBuilder()
   for i = 0; i < count; i = i + 1 {
     sb.write_char(' ')
   }

@@ -1,6 +1,4 @@
 import {
-  "V1GreenSummer/codemoonbit/core",
-  "V1GreenSummer/codemoonbit/state",
   "V1GreenSummer/codemoonbit/search",
   "V1GreenSummer/codemoonbit/input",
   "V1GreenSummer/codemoonbit/ffi",
