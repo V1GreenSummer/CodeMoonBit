@@ -11,18 +11,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install MoonBit
+      # The project requires moonc >= 0.10.14; the stable channel is older,
+      # so CI installs the development channel.
+      - name: Install MoonBit (dev channel)
         run: |
+          export MOONBIT_INSTALL_DEV=1
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
 
-      - name: Show toolchain version
-        run: moon version
+      - name: Verify toolchain version
+        run: |
+          moon version --all
+          version=$(moon version --all | sed -n 's/.*moonc v\([0-9][0-9.]*\).*/\1/p' | head -1)
+          echo "moonc=$version"
+          test -n "$version"
+          lowest=$(printf '%s\n0.10.14\n' "$version" | sort -V | head -1)
+          if [ "$lowest" != "0.10.14" ]; then
+            echo "moonc $version is older than the required 0.10.14"
+            exit 1
+          fi
 
-      # The MoonBit formatter and .mbti generator are version sensitive, and
-      # the toolchain installer only serves the latest stable build. These two
-      # steps therefore report drift instead of failing the build; pin the
-      # toolchain locally to the same release when reproducing the checks.
+      # The development channel advances continuously and the MoonBit
+      # formatter and .mbti generator are version sensitive, so these two
+      # steps report drift instead of failing the build. Run `moon fmt` and
+      # `moon info` with the same dev build locally before pushing.
       - name: Format check (advisory)
         run: moon fmt --check || echo "::warning title=MoonBit format drift::moon fmt differs with this toolchain version"
 
