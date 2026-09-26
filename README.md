@@ -141,6 +141,15 @@ The returned handle exposes `getDoc`, `setDoc`, `setSelection`, `getHTML`,
 - The document structure is a line array with persistent unchanged strings, not
   a rope; very large documents pay O(lines) per edit.
 
+## References
+
+- The public API is inspired by CodeMirror 6; no CodeMirror source code is
+  included in this repository. The implementation is original MoonBit code.
+- MoonBit core packages (json, string, encoding) and the wasm-gc toolchain are
+  used as dependencies; no third-party editor source is vendored.
+- Used by [Typst.bit](https://github.com/V1GreenSummer/typst-bit) as its only
+  editor, and published on mooncakes.io as `V1GreenSummer/codemoonbit`.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
