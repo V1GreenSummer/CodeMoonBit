@@ -1,7 +1,7 @@
 ///|
 /// A line tokenizer that marks the whole line as a variable name, used for
 /// plain text documents.
-fn plain_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
+fn plain_tokenizer(line : String, _state : Int32) -> (Array[Token], Int32) {
   if line.length() == 0 {
     ([], 0)
   } else {
@@ -26,8 +26,8 @@ pub fn plain_language() -> Language {
 /// the editor for indentation and bracket handling.
 pub struct Language {
   priv name : String
-  priv tokenizer : (String, Int) -> (Array[Token], Int)
-  priv indent_fn : ((String, Int) -> Int)?
+  priv tokenizer : (String, Int32) -> (Array[Token], Int32)
+  priv indent_fn : ((String, Int32) -> Int32)?
   priv brackets : Array[(String, String)]
   priv comment_tokens : (String, String)?
   priv comment_line : String?
@@ -44,8 +44,8 @@ pub fn Language::name(self : Language) -> String {
 pub fn Language::tokenize(
   self : Language,
   line : String,
-  state : Int,
-) -> (Array[Token], Int) {
+  state : Int32,
+) -> (Array[Token], Int32) {
   (self.tokenizer)(line, state)
 }
 
@@ -55,9 +55,9 @@ pub fn Language::tokenize(
 pub fn Language::indent(
   self : Language,
   line : String,
-  state : Int,
-  previous_indent : Int,
-) -> Int {
+  state : Int32,
+  previous_indent : Int32,
+) -> Int32 {
   match self.indent_fn {
     Some(f) => f(line, state)
     None => previous_indent

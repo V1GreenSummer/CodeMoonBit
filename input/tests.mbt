@@ -1,5 +1,5 @@
 ///|
-fn cursor_state(content : String, pos : Int) -> @state.EditorState {
+fn cursor_state(content : String, pos : Int32) -> @state.EditorState {
   @state.EditorState::create(
     doc=@core.Text::of(content),
     selection=@core.EditorSelection::cursor(pos),
@@ -15,7 +15,7 @@ fn state_of(
 }
 
 ///|
-fn has_range(sel : @core.EditorSelection, from : Int, to : Int) -> Bool {
+fn has_range(sel : @core.EditorSelection, from : Int32, to : Int32) -> Bool {
   for r in sel.ranges() {
     if r.from() == from && r.to() == to {
       return true

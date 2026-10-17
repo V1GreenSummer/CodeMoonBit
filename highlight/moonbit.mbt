@@ -40,7 +40,7 @@ fn is_moonbit_atom(word : String) -> Bool {
 }
 
 ///|
-fn is_moonbit_punct(c : Int) -> Bool {
+fn is_moonbit_punct(c : Int32) -> Bool {
   c == 40 ||
   c == 41 ||
   c == 91 ||
@@ -54,7 +54,7 @@ fn is_moonbit_punct(c : Int) -> Bool {
 }
 
 ///|
-fn is_moonbit_operator(c : Int) -> Bool {
+fn is_moonbit_operator(c : Int32) -> Bool {
   c == 43 ||
   c == 45 ||
   c == 42 ||
@@ -77,7 +77,7 @@ fn is_moonbit_operator(c : Int) -> Bool {
 ///|
 /// Scans an already open block comment, tracking nesting depth. Emits one
 /// `Comment` token for the consumed region and returns the remaining depth.
-fn moonbit_block_comment(sc : Scanner, start_depth : Int) -> Int {
+fn moonbit_block_comment(sc : Scanner, start_depth : Int32) -> Int32 {
   let mut depth = start_depth
   let start = sc.pos
   while !sc.eof() {
@@ -166,7 +166,7 @@ fn moonbit_string(sc : Scanner) -> Unit {
 }
 
 ///|
-fn moonbit_tokenizer(line : String, state : Int) -> (Array[Token], Int) {
+fn moonbit_tokenizer(line : String, state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut depth = state
   if depth > 0 {

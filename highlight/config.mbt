@@ -20,7 +20,7 @@ priv struct LangConfig {
   string_prefixes : Array[String]
   char_literals : Bool
   rust_lifetimes : Bool
-  escape : Int
+  escape : Int32
   allow_regex : Bool
   preprocessor : Bool
   hash_attributes : Bool
@@ -30,7 +30,7 @@ priv struct LangConfig {
   sigil_chars : String
   shebang : Bool
   colon_atoms : Bool
-  property_before : Array[Int]
+  property_before : Array[Int32]
   table_headers : Bool
   rust_raw : Bool
   cpp_raw : Bool
@@ -40,7 +40,7 @@ priv struct LangConfig {
   ruby_begin : Bool
   hash_hex_colors : Bool
   hyphen_words : Bool
-  state_template_base : Int
+  state_template_base : Int32
   punct_chars : String
   operator_chars : String
   brackets : Array[(String, String)]
@@ -51,49 +51,49 @@ priv struct LangConfig {
 /// stay mostly data.
 fn lang_config(
   name : String,
-  keywords? : Array[String] = [],
-  types? : Array[String] = [],
-  atoms? : Array[String] = ["true", "false", "null", "nil", "none", "undefined"],
-  extra_words? : Array[(String, TokenType)] = [],
-  case_insensitive? : Bool = false,
-  capitalized_types? : Bool = false,
-  line_comments? : Array[String] = [],
-  block_comments? : Array[(String, String)] = [],
-  nested_comments? : Bool = false,
-  quotes? : Array[String] = ["\"", "'"],
-  quote_escapes? : Bool = true,
-  multiline_quotes? : Bool = false,
-  doubled_quotes? : Bool = false,
-  triples? : Array[String] = [],
-  templates? : Array[String] = [],
-  template_escapes? : Bool = true,
-  string_prefixes? : Array[String] = [],
-  char_literals? : Bool = false,
-  rust_lifetimes? : Bool = false,
-  escape? : Int = 92,
-  allow_regex? : Bool = false,
-  preprocessor? : Bool = false,
-  hash_attributes? : Bool = false,
-  at_decorators? : Bool = false,
-  at_keywords? : Bool = false,
-  dollar_vars? : Bool = false,
-  sigil_chars? : String = "",
-  shebang? : Bool = false,
-  colon_atoms? : Bool = false,
-  property_before? : Array[Int] = [],
-  table_headers? : Bool = false,
-  rust_raw? : Bool = false,
-  cpp_raw? : Bool = false,
-  csharp_verbatim? : Bool = false,
-  number_suffix_chars? : String = "",
-  leading_dot_numbers? : Bool = false,
-  ruby_begin? : Bool = false,
-  hash_hex_colors? : Bool = false,
-  hyphen_words? : Bool = false,
-  state_template_base? : Int = STATE_TEMPLATE_BASE,
-  punct_chars? : String = "()[]{}.,;:",
-  operator_chars? : String = "+-*/%&|^!~<>=?@#$\\",
-  brackets? : Array[(String, String)] = [("(", ")"), ("[", "]"), ("{", "}")],
+  keywords~ : Array[String] = [],
+  types~ : Array[String] = [],
+  atoms~ : Array[String] = ["true", "false", "null", "nil", "none", "undefined"],
+  extra_words~ : Array[(String, TokenType)] = [],
+  case_insensitive~ : Bool = false,
+  capitalized_types~ : Bool = false,
+  line_comments~ : Array[String] = [],
+  block_comments~ : Array[(String, String)] = [],
+  nested_comments~ : Bool = false,
+  quotes~ : Array[String] = ["\"", "'"],
+  quote_escapes~ : Bool = true,
+  multiline_quotes~ : Bool = false,
+  doubled_quotes~ : Bool = false,
+  triples~ : Array[String] = [],
+  templates~ : Array[String] = [],
+  template_escapes~ : Bool = true,
+  string_prefixes~ : Array[String] = [],
+  char_literals~ : Bool = false,
+  rust_lifetimes~ : Bool = false,
+  escape~ : Int32 = 92,
+  allow_regex~ : Bool = false,
+  preprocessor~ : Bool = false,
+  hash_attributes~ : Bool = false,
+  at_decorators~ : Bool = false,
+  at_keywords~ : Bool = false,
+  dollar_vars~ : Bool = false,
+  sigil_chars~ : String = "",
+  shebang~ : Bool = false,
+  colon_atoms~ : Bool = false,
+  property_before~ : Array[Int32] = [],
+  table_headers~ : Bool = false,
+  rust_raw~ : Bool = false,
+  cpp_raw~ : Bool = false,
+  csharp_verbatim~ : Bool = false,
+  number_suffix_chars~ : String = "",
+  leading_dot_numbers~ : Bool = false,
+  ruby_begin~ : Bool = false,
+  hash_hex_colors~ : Bool = false,
+  hyphen_words~ : Bool = false,
+  state_template_base~ : Int32 = STATE_TEMPLATE_BASE,
+  punct_chars~ : String = "()[]{}.,;:",
+  operator_chars~ : String = "+-*/%&|^!~<>=?@#$\\",
+  brackets~ : Array[(String, String)] = [("(", ")"), ("[", "]"), ("{", "}")],
 ) -> LangConfig {
   let words : Map[String, TokenType] = Map([])
   let add = fn(list : Array[String], typ : TokenType) {

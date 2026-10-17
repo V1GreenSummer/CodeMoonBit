@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # The project requires moonc >= 0.10.14; the stable channel is older,
+      # The project requires moonc >= 0.10.15; the stable channel is older,
       # so CI installs the development channel.
       - name: Install MoonBit (dev channel)
         run: |
@@ -25,9 +25,9 @@ jobs:
           version=$(moon version --all | sed -n 's/.*moonc v\([0-9][0-9.]*\).*/\1/p' | head -1)
           echo "moonc=$version"
           test -n "$version"
-          lowest=$(printf '%s\n0.10.14\n' "$version" | sort -V | head -1)
-          if [ "$lowest" != "0.10.14" ]; then
-            echo "moonc $version is older than the required 0.10.14"
+          lowest=$(printf '%s\n0.10.15\n' "$version" | sort -V | head -1)
+          if [ "$lowest" != "0.10.15" ]; then
+            echo "moonc $version is older than the required 0.10.15"
             exit 1
           fi
 

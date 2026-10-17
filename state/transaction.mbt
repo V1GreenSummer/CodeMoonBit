@@ -9,7 +9,7 @@ pub(all) enum Annotation {
 
 ///|
 pub struct EffectEntry {
-  priv id : Int
+  priv id : Int32
   priv read : () -> Unit
 }
 
@@ -18,7 +18,7 @@ pub struct EffectEntry {
 /// produce entries with `effect.of(value)`, and read them from a transaction
 /// with `tr.effects(effect)`.
 pub struct StateEffect[T] {
-  priv id : Int
+  priv id : Int32
   priv mut holder : T?
 }
 
@@ -28,7 +28,7 @@ pub fn[T] StateEffect::new() -> StateEffect[T] {
 }
 
 ///|
-pub fn[T] StateEffect::id(self : StateEffect[T]) -> Int {
+pub fn[T] StateEffect::id(self : StateEffect[T]) -> Int32 {
   self.id
 }
 
@@ -51,8 +51,8 @@ pub(all) struct TransactionSpec {
 pub fn TransactionSpec::new(
   changes? : @core.ChangeSet,
   selection? : @core.EditorSelection,
-  effects? : Array[EffectEntry] = [],
-  annotations? : Array[Annotation] = [],
+  effects~ : Array[EffectEntry] = [],
+  annotations~ : Array[Annotation] = [],
   scroll_into_view? : Bool,
 ) -> TransactionSpec {
   { changes, selection, effects, annotations, scroll_into_view, }

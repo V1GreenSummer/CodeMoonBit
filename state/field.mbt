@@ -1,7 +1,7 @@
 ///|
 /// An update definition for state fields.
 pub struct StateField[T] {
-  priv id : Int
+  priv id : Int32
   priv init : (EditorState) -> T
   priv update : ((T, Transaction) -> T)?
   priv mut holder : T?
@@ -16,14 +16,14 @@ pub fn[T] StateField::new(
 }
 
 ///|
-pub fn[T] StateField::id(self : StateField[T]) -> Int {
+pub fn[T] StateField::id(self : StateField[T]) -> Int32 {
   self.id
 }
 
 ///|
 /// The type-erased runtime representation of a state field.
 pub struct ErasedField {
-  priv id : Int
+  priv id : Int32
   priv init_slot : (EditorState) -> () -> Unit
   priv update_slot : ((Transaction) -> () -> Unit)?
 }

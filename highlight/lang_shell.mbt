@@ -109,7 +109,7 @@ fn makefile_variable(sc : Scanner) -> Unit {
 ///|
 /// Makefile: terse but recognizes comments, rules/targets (`Meta`), variables,
 /// assignments and the usual conditional keywords.
-fn makefile_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
+fn makefile_tokenizer(line : String, _state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   if line.length() == 0 {
     return (sc.tokens, 0)

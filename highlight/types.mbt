@@ -29,8 +29,8 @@ pub extend TokenType with Debug::{to_repr}
 ///|
 /// A highlighted span of a single line, in line-relative UTF-16 code units.
 pub struct Token {
-  from : Int
-  to : Int
+  from : Int32
+  to : Int32
   typ : TokenType
 } derive(Eq, Debug)
 

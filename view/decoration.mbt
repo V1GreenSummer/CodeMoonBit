@@ -2,18 +2,18 @@
 /// View decorations supplied by the editor extension layer.
 pub(all) enum Decoration {
   Mark(@core.Range, String)
-  Line(Int, String)
-  Widget(Int, String, String)
-  GutterMarker(Int, String)
-  Fold(Int)
-  Foldable(Int)
+  Line(Int32, String)
+  Widget(Int32, String, String)
+  GutterMarker(Int32, String)
+  Fold(Int32)
+  Foldable(Int32)
 }
 
 ///|
 pub(all) struct ViewOptions {
   line_numbers : Bool
   line_wrapping : Bool
-  tab_size : Int
+  tab_size : Int32
   read_only : Bool
   theme : String
   font : String
@@ -89,7 +89,7 @@ pub fn ViewOptions::with_read_only(
 ///|
 pub fn ViewOptions::with_tab_size(
   self : ViewOptions,
-  value : Int,
+  value : Int32,
 ) -> ViewOptions {
   {
     line_numbers: self.line_numbers,

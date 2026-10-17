@@ -1,5 +1,5 @@
 ///|
-fn is_tag_name_char(c : Int) -> Bool {
+fn is_tag_name_char(c : Int32) -> Bool {
   is_word(c) || c == 45 || c == 46 || c == 58
 }
 
@@ -25,7 +25,7 @@ fn html_comment(sc : Scanner, at_open : Bool) -> Bool {
 
 ///|
 /// Scans an attribute value body. Returns whether the quote closed.
-fn html_string_body(sc : Scanner, quote : Int) -> Bool {
+fn html_string_body(sc : Scanner, quote : Int32) -> Bool {
   while !sc.eof() {
     if sc.peek(0) == quote {
       let _ = sc.advance()
@@ -39,7 +39,7 @@ fn html_string_body(sc : Scanner, quote : Int) -> Bool {
 ///|
 /// Scans the inside of a tag (attributes, `=`, quoted values). Returns `0`
 /// when the tag closed, or the continuation state (`2`/`3`/`4`).
-fn html_tag_body(sc : Scanner) -> Int {
+fn html_tag_body(sc : Scanner) -> Int32 {
   while !sc.eof() {
     let c = sc.peek(0)
     if is_whitespace(c) {
@@ -81,7 +81,7 @@ fn html_tag_body(sc : Scanner) -> Int {
 
 ///|
 /// Scans a tag starting at `<`. Returns the continuation state.
-fn html_tag_start(sc : Scanner) -> Int {
+fn html_tag_start(sc : Scanner) -> Int32 {
   let start = sc.pos
   sc.push(start, start + 1, Punctuation)
   sc.pos = sc.pos + 1
@@ -102,7 +102,7 @@ fn html_tag_start(sc : Scanner) -> Int {
 ///|
 /// HTML/XML-style markup tokenizer: tags, attributes, quoted values, comments
 /// (with multi-line state) and text runs.
-fn html_tokenizer(line : String, state : Int) -> (Array[Token], Int) {
+fn html_tokenizer(line : String, state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut st = state
   if st == 1 {

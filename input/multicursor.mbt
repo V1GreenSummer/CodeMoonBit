@@ -1,5 +1,5 @@
 ///|
-fn has_cursor_at(sel : @core.EditorSelection, pos : Int) -> Bool {
+fn has_cursor_at(sel : @core.EditorSelection, pos : Int32) -> Bool {
   for r in sel.ranges() {
     if r.from() == pos && r.to() == pos {
       return true
@@ -12,7 +12,7 @@ fn has_cursor_at(sel : @core.EditorSelection, pos : Int) -> Bool {
 /// Adds a cursor `dir` lines away from the main range, at the same column.
 fn add_cursor_relative(
   state : @state.EditorState,
-  dir : Int,
+  dir : Int32,
 ) -> @state.TransactionSpec {
   let doc = state.doc()
   let sel = state.selection()
@@ -61,7 +61,7 @@ pub fn add_cursor_to_line_end(
 }
 
 ///|
-fn matches_at(text : String, pat : String, at : Int) -> Bool {
+fn matches_at(text : String, pat : String, at : Int32) -> Bool {
   if at < 0 || at + pat.length() > text.length() {
     return false
   }
@@ -76,8 +76,8 @@ fn matches_at(text : String, pat : String, at : Int) -> Bool {
 ///|
 fn overlaps_selection(
   sel : @core.EditorSelection,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
 ) -> Bool {
   for r in sel.ranges() {
     if from < r.to() && r.from() < to {
@@ -103,7 +103,7 @@ pub fn select_next_occurrence(
   let sel = state.selection()
   let main = sel.main_range()
   let len = selection_text.length()
-  let candidates : Array[Int] = []
+  let candidates : Array[Int32] = []
   let mut i = 0
   while i + len <= text.length() {
     if matches_at(text, selection_text, i) {
@@ -113,7 +113,7 @@ pub fn select_next_occurrence(
       i = i + 1
     }
   }
-  let mut chosen : Int? = None
+  let mut chosen : Int32? = None
   for c in candidates {
     if c >= main.to() && !overlaps_selection(sel, c, c + len) {
       chosen = Some(c)

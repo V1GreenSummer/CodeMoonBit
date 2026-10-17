@@ -1,7 +1,7 @@
 ///|
 pub(all) struct Range {
-  from : Int
-  to : Int
+  from : Int32
+  to : Int32
 } derive(Eq, Hash)
 
 ///|
@@ -11,7 +11,7 @@ pub extend Range with Eq::{not_equal, equal}
 pub extend Range with Hash::{hash, hash_combine}
 
 ///|
-pub fn Range::new(from : Int, to : Int) -> Range {
+pub fn Range::new(from : Int32, to : Int32) -> Range {
   if from <= to {
     { from, to, }
   } else {
@@ -20,12 +20,12 @@ pub fn Range::new(from : Int, to : Int) -> Range {
 }
 
 ///|
-pub fn Range::empty(pos : Int) -> Range {
+pub fn Range::empty(pos : Int32) -> Range {
   { from: pos, to: pos, }
 }
 
 ///|
-pub fn Range::length(self : Range) -> Int {
+pub fn Range::length(self : Range) -> Int32 {
   self.to - self.from
 }
 
@@ -35,7 +35,7 @@ pub fn Range::is_empty(self : Range) -> Bool {
 }
 
 ///|
-pub fn Range::contains(self : Range, pos : Int) -> Bool {
+pub fn Range::contains(self : Range, pos : Int32) -> Bool {
   self.from <= pos && pos <= self.to
 }
 
@@ -60,7 +60,11 @@ pub fn Range::eq(self : Range, other : Range) -> Bool {
 }
 
 ///|
-pub fn Range::map(self : Range, changes : ChangeSet, assoc? : Int = 1) -> Range {
+pub fn Range::map(
+  self : Range,
+  changes : ChangeSet,
+  assoc~ : Int32 = 1,
+) -> Range {
   changes.map_range(self, assoc)
 }
 
@@ -108,7 +112,7 @@ pub fn RangeSet::ranges(self : RangeSet) -> Array[Range] {
 }
 
 ///|
-pub fn RangeSet::size(self : RangeSet) -> Int {
+pub fn RangeSet::size(self : RangeSet) -> Int32 {
   self.ranges.length()
 }
 
@@ -118,7 +122,7 @@ pub fn RangeSet::iter(self : RangeSet) -> Iter[Range] {
 }
 
 ///|
-pub fn RangeSet::contains(self : RangeSet, pos : Int) -> Bool {
+pub fn RangeSet::contains(self : RangeSet, pos : Int32) -> Bool {
   for r in self.ranges {
     if r.from > pos {
       return false
@@ -131,7 +135,11 @@ pub fn RangeSet::contains(self : RangeSet, pos : Int) -> Bool {
 }
 
 ///|
-pub fn RangeSet::between(self : RangeSet, from : Int, to : Int) -> Array[Range] {
+pub fn RangeSet::between(
+  self : RangeSet,
+  from : Int32,
+  to : Int32,
+) -> Array[Range] {
   let result : Array[Range] = []
   for r in self.ranges {
     if r.from > to {

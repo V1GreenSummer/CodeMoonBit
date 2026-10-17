@@ -2,36 +2,36 @@
 /// The (small) regular expression AST used by `find_matches` when
 /// `SearchQuery::regex` is set.
 priv enum Re {
-  Lit(Int)
+  Lit(Int32)
   AnyChar
-  Cls(Array[(Int, Int)], Bool)
+  Cls(Array[(Int32, Int32)], Bool)
   StartAnchor
   EndAnchor
   WordBoundary
   Alt(Array[Re])
   Cat(Array[Re])
-  Rep(Re, Int, Int)
+  Rep(Re, Int32, Int32)
 }
 
 ///|
-fn word_ranges() -> Array[(Int, Int)] {
+fn word_ranges() -> Array[(Int32, Int32)] {
   [(48, 57), (65, 90), (95, 95), (97, 122)]
 }
 
 ///|
-fn space_ranges() -> Array[(Int, Int)] {
+fn space_ranges() -> Array[(Int32, Int32)] {
   [(9, 13), (32, 32)]
 }
 
 ///|
-fn complement_ranges(ranges : Array[(Int, Int)]) -> Array[(Int, Int)] {
+fn complement_ranges(ranges : Array[(Int32, Int32)]) -> Array[(Int32, Int32)] {
   let sorted = ranges.copy()
   sorted.sort_by(fn(a, b) {
     let (a_low, _) = a
     let (b_low, _) = b
     a_low - b_low
   })
-  let result : Array[(Int, Int)] = []
+  let result : Array[(Int32, Int32)] = []
   let mut next = 0
   for range in sorted {
     let (low, high) = range
@@ -51,7 +51,7 @@ fn complement_ranges(ranges : Array[(Int, Int)]) -> Array[(Int, Int)] {
 ///|
 priv struct RegexParser {
   pattern : String
-  mut index : Int
+  mut index : Int32
   mut failed : Bool
 }
 
@@ -66,7 +66,7 @@ fn RegexParser::eof(self : RegexParser) -> Bool {
 }
 
 ///|
-fn RegexParser::peek(self : RegexParser) -> Int {
+fn RegexParser::peek(self : RegexParser) -> Int32 {
   if self.eof() {
     -1
   } else {
@@ -75,7 +75,7 @@ fn RegexParser::peek(self : RegexParser) -> Int {
 }
 
 ///|
-fn RegexParser::advance(self : RegexParser) -> Int {
+fn RegexParser::advance(self : RegexParser) -> Int32 {
   let c = self.peek()
   if c >= 0 {
     self.index = self.index + 1
@@ -84,7 +84,7 @@ fn RegexParser::advance(self : RegexParser) -> Int {
 }
 
 ///|
-fn RegexParser::eat(self : RegexParser, c : Int) -> Bool {
+fn RegexParser::eat(self : RegexParser, c : Int32) -> Bool {
   if self.peek() == c {
     self.index = self.index + 1
     true
@@ -200,7 +200,7 @@ fn RegexParser::parse_escape(self : RegexParser) -> Re {
 
 ///|
 fn RegexParser::parse_class(self : RegexParser) -> Re {
-  let ranges : Array[(Int, Int)] = []
+  let ranges : Array[(Int32, Int32)] = []
   let mut negated = false
   if self.eat(94) {
     negated = true
@@ -224,7 +224,7 @@ fn RegexParser::parse_class(self : RegexParser) -> Re {
 }
 
 ///|
-fn RegexParser::parse_class_item(self : RegexParser) -> Array[(Int, Int)] {
+fn RegexParser::parse_class_item(self : RegexParser) -> Array[(Int32, Int32)] {
   let c = self.advance()
   if c < 0 {
     self.failed = true
@@ -249,7 +249,7 @@ fn RegexParser::parse_class_item(self : RegexParser) -> Array[(Int, Int)] {
 }
 
 ///|
-fn RegexParser::parse_class_escape(self : RegexParser) -> Array[(Int, Int)] {
+fn RegexParser::parse_class_escape(self : RegexParser) -> Array[(Int32, Int32)] {
   let c = self.advance()
   if c < 0 {
     self.failed = true
@@ -295,7 +295,7 @@ fn parse_regex(pattern : String) -> Re? {
 ///|
 priv struct RegexMatcher {
   content : String
-  length : Int
+  length : Int32
   case_sensitive : Bool
 }
 
@@ -305,12 +305,12 @@ fn RegexMatcher::new(content : String, case_sensitive : Bool) -> RegexMatcher {
 }
 
 ///|
-fn RegexMatcher::unit(self : RegexMatcher, index : Int) -> Int {
+fn RegexMatcher::unit(self : RegexMatcher, index : Int32) -> Int32 {
   self.content.unsafe_get(index).to_int()
 }
 
 ///|
-fn range_hit(ranges : Array[(Int, Int)], code : Int) -> Bool {
+fn range_hit(ranges : Array[(Int32, Int32)], code : Int32) -> Bool {
   for range in ranges {
     let (low, high) = range
     if code >= low && code <= high {
@@ -322,8 +322,8 @@ fn range_hit(ranges : Array[(Int, Int)], code : Int) -> Bool {
 
 ///|
 fn class_hit(
-  ranges : Array[(Int, Int)],
-  code : Int,
+  ranges : Array[(Int32, Int32)],
+  code : Int32,
   case_sensitive : Bool,
 ) -> Bool {
   if range_hit(ranges, code) {
@@ -340,8 +340,8 @@ fn class_hit(
 fn RegexMatcher::match_here(
   self : RegexMatcher,
   re : Re,
-  pos : Int,
-  k : (Int) -> Bool,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   match re {
     Lit(code) =>
@@ -379,9 +379,9 @@ fn RegexMatcher::match_here(
 fn RegexMatcher::match_sequence(
   self : RegexMatcher,
   nodes : Array[Re],
-  index : Int,
-  pos : Int,
-  k : (Int) -> Bool,
+  index : Int32,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   if index >= nodes.length() {
     k(pos)
@@ -396,15 +396,15 @@ fn RegexMatcher::match_sequence(
 fn RegexMatcher::match_repeat(
   self : RegexMatcher,
   inner : Re,
-  count : Int,
-  min : Int,
-  max : Int,
-  pos : Int,
-  k : (Int) -> Bool,
+  count : Int32,
+  min : Int32,
+  max : Int32,
+  pos : Int32,
+  k : (Int32) -> Bool,
 ) -> Bool {
   let can_more = max < 0 || count < max
   if can_more {
-    let more : (Int) -> Bool = fn(next) {
+    let more : (Int32) -> Bool = fn(next) {
       if next == pos {
         if count + 1 >= min {
           k(pos)
@@ -426,7 +426,7 @@ fn RegexMatcher::match_repeat(
 fn find_regex_matches(
   content : String,
   query : SearchQuery,
-  limit : Int,
+  limit : Int32,
 ) -> Array[@core.Range] {
   let result : Array[@core.Range] = []
   match parse_regex(query.text) {
@@ -436,7 +436,7 @@ fn find_regex_matches(
       let length = content.length()
       let mut start = 0
       while start <= length && (limit <= 0 || result.length() < limit) {
-        let end_ref : Ref[Int] = { val: -1, }
+        let end_ref : Ref[Int32] = { val: -1, }
         let matched = matcher.match_here(re, start, fn(pos) {
           end_ref.val = pos
           true

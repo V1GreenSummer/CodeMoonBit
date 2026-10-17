@@ -1,5 +1,5 @@
 ///|
-fn markdown_is_hr(line : String, from : Int) -> Int {
+fn markdown_is_hr(line : String, from : Int32) -> Int32 {
   let n = line.length()
   let mut count = 0
   let mut marker = 0
@@ -28,7 +28,7 @@ fn markdown_is_hr(line : String, from : Int) -> Int {
 }
 
 ///|
-fn markdown_flush_plain(sc : Scanner, plain_start : Int) -> Unit {
+fn markdown_flush_plain(sc : Scanner, plain_start : Int32) -> Unit {
   sc.push(plain_start, sc.pos, VariableName)
 }
 
@@ -103,7 +103,7 @@ fn markdown_inline(sc : Scanner) -> Unit {
 }
 
 ///|
-fn markdown_block(sc : Scanner, lead : Int) -> Int {
+fn markdown_block(sc : Scanner, lead : Int32) -> Int32 {
   let line = sc.line
   let n = sc.len
   let c = sc.code_at(lead)
@@ -185,7 +185,7 @@ fn markdown_block(sc : Scanner, lead : Int) -> Int {
 }
 
 ///|
-fn markdown_tokenizer(line : String, state : Int) -> (Array[Token], Int) {
+fn markdown_tokenizer(line : String, state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   if state == 1 || state == 2 {
     let fence_char = if state == 1 { 96 } else { 126 }

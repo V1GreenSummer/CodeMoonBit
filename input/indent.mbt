@@ -1,20 +1,20 @@
 ///|
 /// The configured indentation width, defaulting to four spaces. The last
 /// configured value wins.
-pub let indent_unit_facet : @state.Facet[Int] = @state.Facet::new(
+pub let indent_unit_facet : @state.Facet[Int32] = @state.Facet::new(
   default=fn() { 4 },
-  combine=fn(_previous : Int, value : Int) { value },
+  combine=fn(_previous : Int32, value : Int32) { value },
 )
 
 ///|
 /// Configures the indentation width used by Tab, `Mod-]` and `Mod-[`.
-pub fn indent_unit(n : Int) -> @state.Extension {
+pub fn indent_unit(n : Int32) -> @state.Extension {
   indent_unit_facet.of(n)
 }
 
 ///|
 /// The indentation width configured in `state`, or four when unset.
-pub fn configured_indent(state : @state.EditorState) -> Int {
+pub fn configured_indent(state : @state.EditorState) -> Int32 {
   let value = state.facet(indent_unit_facet)
   if value > 0 {
     value
@@ -26,7 +26,7 @@ pub fn configured_indent(state : @state.EditorState) -> Int {
 ///|
 /// Resolves the indentation width for an editing command: an explicit
 /// `indent_unit` wins, otherwise the state's configured value is used.
-fn resolve_indent(state : @state.EditorState, indent_unit : Int?) -> Int {
+fn resolve_indent(state : @state.EditorState, indent_unit : Int32?) -> Int32 {
   match indent_unit {
     Some(value) => if value > 0 { value } else { configured_indent(state) }
     None => configured_indent(state)
@@ -50,7 +50,7 @@ pub fn leading_whitespace(line : String) -> String {
 
 ///|
 /// The visual indentation width of a line, expanding tabs to `tab_size`.
-pub fn count_indent(line : String, tab_size? : Int = 4) -> Int {
+pub fn count_indent(line : String, tab_size~ : Int32 = 4) -> Int32 {
   let mut col = 0
   let mut i = 0
   while i < line.length() {
@@ -69,19 +69,23 @@ pub fn count_indent(line : String, tab_size? : Int = 4) -> Int {
 
 ///|
 /// The visual indentation width of a document line.
-pub fn line_indent(doc : @core.Text, line : Int, tab_size? : Int = 4) -> Int {
+pub fn line_indent(
+  doc : @core.Text,
+  line : Int32,
+  tab_size~ : Int32 = 4,
+) -> Int32 {
   count_indent(doc.line(line), tab_size~)
 }
 
 ///|
 /// The document lines touched by a selection range.
-fn touched_lines(doc : @core.Text, r : @core.SelectionRange) -> Array[Int] {
+fn touched_lines(doc : @core.Text, r : @core.SelectionRange) -> Array[Int32] {
   let start = doc.line_at(r.from())
   let mut end = doc.line_at(r.to())
   if end > start && r.to() == doc.line_start(end) {
     end = end - 1
   }
-  let result : Array[Int] = []
+  let result : Array[Int32] = []
   for i = start; i <= end; i = i + 1 {
     result.push(i)
   }
@@ -93,12 +97,12 @@ fn touched_lines(doc : @core.Text, r : @core.SelectionRange) -> Array[Int] {
 /// using the configured indent when `indent_unit` is omitted.
 pub fn indent_more(
   state : @state.EditorState,
-  indent_unit? : Int,
+  indent_unit? : Int32,
 ) -> @state.TransactionSpec {
   let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
-  let seen : Array[Int] = []
+  let seen : Array[Int32] = []
   for r in state.selection().ranges() {
     for line in touched_lines(doc, r) {
       if !seen.contains(line) {
@@ -115,12 +119,12 @@ pub fn indent_more(
 /// the configured indent when `indent_unit` is omitted.
 pub fn indent_less(
   state : @state.EditorState,
-  indent_unit? : Int,
+  indent_unit? : Int32,
 ) -> @state.TransactionSpec {
   let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
-  let seen : Array[Int] = []
+  let seen : Array[Int32] = []
   for r in state.selection().ranges() {
     for line in touched_lines(doc, r) {
       if !seen.contains(line) {
@@ -152,12 +156,12 @@ pub fn indent_less(
 /// when `indent_unit` is omitted.
 pub fn insert_tab(
   state : @state.EditorState,
-  indent_unit? : Int,
+  indent_unit? : Int32,
 ) -> @state.TransactionSpec {
   let unit = resolve_indent(state, indent_unit)
   let doc = state.doc()
   let changes : Array[@core.Change] = []
-  let seen : Array[Int] = []
+  let seen : Array[Int32] = []
   for r in state.selection().ranges() {
     if r.anchor != r.head {
       for line in touched_lines(doc, r) {

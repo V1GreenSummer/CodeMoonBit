@@ -5,25 +5,25 @@
 pub type JsAny
 
 ///|
-pub extern "wasm" fn sb_new() -> Int = "dom" "sb_new"
+pub extern "wasm" fn sb_new() -> Int32 = "dom" "sb_new"
 
 ///|
-pub extern "wasm" fn sb_push(sb : Int, code : Int) -> Unit = "dom" "sb_push"
+pub extern "wasm" fn sb_push(sb : Int32, code : Int32) -> Unit = "dom" "sb_push"
 
 ///|
-pub extern "wasm" fn sb_clear(sb : Int) -> Unit = "dom" "sb_clear"
+pub extern "wasm" fn sb_clear(sb : Int32) -> Unit = "dom" "sb_clear"
 
 ///|
-pub extern "wasm" fn sb_finish(sb : Int) -> JsAny = "dom" "sb_finish"
+pub extern "wasm" fn sb_finish(sb : Int32) -> JsAny = "dom" "sb_finish"
 
 ///|
-pub extern "wasm" fn js_len(s : JsAny) -> Int = "dom" "js_len"
+pub extern "wasm" fn js_len(s : JsAny) -> Int32 = "dom" "js_len"
 
 ///|
-pub extern "wasm" fn js_char(s : JsAny, i : Int) -> Int = "dom" "js_char"
+pub extern "wasm" fn js_char(s : JsAny, i : Int32) -> Int32 = "dom" "js_char"
 
 ///|
-pub fn push_string(sb : Int, s : String) -> Unit {
+pub fn push_string(sb : Int32, s : String) -> Unit {
   for i = 0; i < s.length(); i = i + 1 {
     sb_push(sb, s.unsafe_get(i).to_int())
   }
@@ -32,10 +32,10 @@ pub fn push_string(sb : Int, s : String) -> Unit {
 ///|
 /// Pushes an already-built JS string into the builder with a single call
 /// (used by the per-line HTML cache).
-pub extern "wasm" fn sb_push_js(sb : Int, value : JsAny) -> Unit = "dom" "sb_push_js"
+pub extern "wasm" fn sb_push_js(sb : Int32, value : JsAny) -> Unit = "dom" "sb_push_js"
 
 ///|
-pub fn push_js_string(sb : Int, s : JsAny) -> Unit {
+pub fn push_js_string(sb : Int32, s : JsAny) -> Unit {
   let n = js_len(s)
   for i = 0; i < n; i = i + 1 {
     sb_push(sb, js_char(s, i))
@@ -47,7 +47,7 @@ pub fn read_js_string(s : JsAny) -> String {
   let n = js_len(s)
   let buf = StringBuilder()
   for i = 0; i < n; i = i + 1 {
-    buf.write_char(Int::unsafe_to_char(js_char(s, i)))
+    buf.write_char(Int32::unsafe_to_char(js_char(s, i)))
   }
   buf.to_string()
 }
@@ -62,7 +62,7 @@ pub fn js_string(s : String) -> JsAny {
 ///|
 /// A reusable string builder handle backed by JavaScript.
 pub struct JsStringBuilder {
-  priv handle : Int
+  priv handle : Int32
 }
 
 ///|
@@ -86,7 +86,7 @@ pub fn JsStringBuilder::push_char(self : JsStringBuilder, c : Char) -> Unit {
 }
 
 ///|
-pub fn JsStringBuilder::push_code(self : JsStringBuilder, code : Int) -> Unit {
+pub fn JsStringBuilder::push_code(self : JsStringBuilder, code : Int32) -> Unit {
   sb_push(self.handle, code)
 }
 
@@ -174,16 +174,16 @@ pub extern "wasm" fn blur(el : JsAny) -> Unit = "dom" "blur"
 pub extern "wasm" fn measure_width(font : JsAny, text : JsAny) -> Double = "dom" "measure_width"
 
 ///|
-pub extern "wasm" fn attach(container : JsAny, editor_id : Int) -> Unit = "dom" "attach"
+pub extern "wasm" fn attach(container : JsAny, editor_id : Int32) -> Unit = "dom" "attach"
 
 ///|
 pub extern "wasm" fn detach(container : JsAny) -> Unit = "dom" "detach"
 
 ///|
-pub extern "wasm" fn request_measure(editor_id : Int) -> Unit = "dom" "request_measure"
+pub extern "wasm" fn request_measure(editor_id : Int32) -> Unit = "dom" "request_measure"
 
 ///|
-pub extern "wasm" fn notify_update(editor_id : Int) -> Unit = "dom" "notify_update"
+pub extern "wasm" fn notify_update(editor_id : Int32) -> Unit = "dom" "notify_update"
 
 ///|
 /// Updates the persistent caret overlay (created once in the JS scaffold) so
@@ -193,7 +193,7 @@ pub extern "wasm" fn set_cursor(
   x : Double,
   y : Double,
   height : Double,
-  visible : Int,
+  visible : Int32,
 ) -> Unit = "dom" "set_cursor"
 
 ///|

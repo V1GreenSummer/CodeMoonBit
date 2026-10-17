@@ -1,10 +1,10 @@
 ///|
-fn json_is_punct(c : Int) -> Bool {
+fn json_is_punct(c : Int32) -> Bool {
   c == 123 || c == 125 || c == 91 || c == 93 || c == 44 || c == 58
 }
 
 ///|
-fn json_break_char(c : Int) -> Bool {
+fn json_break_char(c : Int32) -> Bool {
   is_whitespace(c) ||
   c == 34 ||
   c == 45 ||
@@ -81,7 +81,7 @@ fn json_number(sc : Scanner) -> Unit {
 }
 
 ///|
-fn json_tokenizer(line : String, state : Int) -> (Array[Token], Int) {
+fn json_tokenizer(line : String, state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut mode = state
   if mode == 1 {

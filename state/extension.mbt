@@ -1,7 +1,7 @@
 ///|
 /// A configured facet contribution inside an extension list.
 pub enum ExtItem {
-  FacetValue(Int, () -> Unit, () -> () -> Unit)
+  FacetValue(Int32, () -> Unit, () -> () -> Unit)
   Field(ErasedField)
 }
 
@@ -36,7 +36,7 @@ pub fn Extension::items(self : Extension) -> Array[ExtItem] {
 }
 
 ///|
-pub fn Extension::size(self : Extension) -> Int {
+pub fn Extension::size(self : Extension) -> Int32 {
   self.items.length()
 }
 
@@ -57,7 +57,7 @@ pub fn Extension::fields(self : Extension) -> Array[ErasedField] {
       _ => ()
     }
   }
-  let seen : Array[Int] = []
+  let seen : Array[Int32] = []
   let unique : Array[ErasedField] = []
   for f in result {
     if !seen.contains(f.id) {
@@ -71,8 +71,8 @@ pub fn Extension::fields(self : Extension) -> Array[ErasedField] {
 ///|
 pub fn Extension::facet_items(
   self : Extension,
-) -> Array[(Int, () -> Unit, () -> () -> Unit)] {
-  let result : Array[(Int, () -> Unit, () -> () -> Unit)] = []
+) -> Array[(Int32, () -> Unit, () -> () -> Unit)] {
+  let result : Array[(Int32, () -> Unit, () -> () -> Unit)] = []
   for item in self.items {
     match item {
       FacetValue(id, input, finalize) => result.push((id, input, finalize))

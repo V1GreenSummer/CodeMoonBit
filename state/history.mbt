@@ -6,7 +6,7 @@ pub(all) struct HistoryGroup {
   selection_before : @core.EditorSelection
   selection_after : @core.EditorSelection
   event : String
-  count : Int
+  count : Int32
 }
 
 ///|
@@ -72,7 +72,7 @@ fn diff_changes(from : @core.Text, to : @core.Text) -> @core.ChangeSet {
 ///|
 /// Maximum number of history groups retained. Once exceeded, the oldest
 /// groups are dropped so undo history memory stays bounded.
-pub let history_max_groups : Int = 200
+pub let history_max_groups : Int32 = 200
 
 ///|
 /// Appends a group to the done stack, trimming the oldest groups when the

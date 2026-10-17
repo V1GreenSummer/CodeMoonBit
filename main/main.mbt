@@ -1,8 +1,8 @@
 ///|
-let registry : Map[Int, @editor.Editor] = Map([])
+let registry : Map[Int32, @editor.Editor] = Map([])
 
 ///|
-fn with_editor(id : Int, f : (@editor.Editor) -> Unit) -> Unit {
+fn with_editor(id : Int32, f : (@editor.Editor) -> Unit) -> Unit {
   match registry.get(id) {
     Some(editor) => f(editor)
     None => ()
@@ -10,36 +10,36 @@ fn with_editor(id : Int, f : (@editor.Editor) -> Unit) -> Unit {
 }
 
 ///|
-pub fn cm_create(container : @ffi.JsAny, id : Int) -> Unit {
+pub fn cm_create(container : @ffi.JsAny, id : Int32) -> Unit {
   let editor = @editor.Editor::create(container, id)
   registry.set(id, editor)
 }
 
 ///|
-pub fn cm_destroy(id : Int) -> Unit {
+pub fn cm_destroy(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.destroy() })
   registry.remove(id)
 }
 
 ///|
-pub fn cm_set_option(id : Int, key : @ffi.JsAny, value : @ffi.JsAny) -> Unit {
+pub fn cm_set_option(id : Int32, key : @ffi.JsAny, value : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) {
     editor.set_option(@ffi.read_js_string(key), @ffi.read_js_string(value))
   })
 }
 
 ///|
-pub fn cm_set_doc(id : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_set_doc(id : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) { editor.set_doc(@ffi.read_js_string(text)) })
 }
 
 ///|
-pub fn cm_set_selection(id : Int, anchor : Int, head : Int) -> Unit {
+pub fn cm_set_selection(id : Int32, anchor : Int32, head : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.set_selection(anchor, head) })
 }
 
 ///|
-fn json_int(obj : Map[String, Json], key : String, fallback : Int) -> Int {
+fn json_int(obj : Map[String, Json], key : String, fallback : Int32) -> Int32 {
   match obj.get(key) {
     Some(Json::Number(n, ..)) => n.to_int()
     _ => fallback
@@ -62,7 +62,7 @@ fn json_text(
 /// Replaces the in-editor diagnostics. The host sends a JSON array of
 /// `{severity, message, line, column, endLine, endColumn}` objects with
 /// 1-based positions, matching the workbench diagnostic shape.
-pub fn cm_set_diagnostics(id : Int, payload : @ffi.JsAny) -> Unit {
+pub fn cm_set_diagnostics(id : Int32, payload : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) {
     let text = @ffi.read_js_string(payload)
     let doc = editor.state().doc()
@@ -100,7 +100,7 @@ pub fn cm_set_diagnostics(id : Int, payload : @ffi.JsAny) -> Unit {
 }
 
 ///|
-pub fn cm_get_doc(id : Int) -> @ffi.JsAny {
+pub fn cm_get_doc(id : Int32) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => @ffi.js_string(editor.doc_string())
     None => @ffi.js_string("")
@@ -108,7 +108,7 @@ pub fn cm_get_doc(id : Int) -> @ffi.JsAny {
 }
 
 ///|
-pub fn cm_get_html(id : Int) -> @ffi.JsAny {
+pub fn cm_get_html(id : Int32) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => @ffi.js_string(editor.rendered_html())
     None => @ffi.js_string("")
@@ -116,7 +116,7 @@ pub fn cm_get_html(id : Int) -> @ffi.JsAny {
 }
 
 ///|
-pub fn cm_get_selection(id : Int) -> @ffi.JsAny {
+pub fn cm_get_selection(id : Int32) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => {
       let selection = editor.state().selection()
@@ -143,7 +143,7 @@ pub fn cm_get_selection(id : Int) -> @ffi.JsAny {
 }
 
 ///|
-pub fn cm_get_state(id : Int) -> @ffi.JsAny {
+pub fn cm_get_state(id : Int32) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => {
       let state = editor.state()
@@ -188,12 +188,17 @@ pub fn cm_get_state(id : Int) -> @ffi.JsAny {
 }
 
 ///|
-pub fn cm_focus(id : Int) -> Unit {
+pub fn cm_focus(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.focus() })
 }
 
 ///|
-pub fn cm_key(id : Int, key : @ffi.JsAny, code : @ffi.JsAny, mods : Int) -> Int {
+pub fn cm_key(
+  id : Int32,
+  key : @ffi.JsAny,
+  code : @ffi.JsAny,
+  mods : Int32,
+) -> Int32 {
   match registry.get(id) {
     Some(editor) => {
       let event : @input.KeyEvent = {
@@ -213,13 +218,13 @@ pub fn cm_key(id : Int, key : @ffi.JsAny, code : @ffi.JsAny, mods : Int) -> Int 
 
 ///|
 pub fn cm_mouse(
-  id : Int,
-  kind : Int,
+  id : Int32,
+  kind : Int32,
   x : Double,
   y : Double,
-  button : Int,
-  detail : Int,
-) -> Int {
+  button : Int32,
+  detail : Int32,
+) -> Int32 {
   match registry.get(id) {
     Some(editor) => {
       let _ = button
@@ -234,22 +239,22 @@ pub fn cm_mouse(
 }
 
 ///|
-pub fn cm_scroll(id : Int, top : Double, left : Double) -> Unit {
+pub fn cm_scroll(id : Int32, top : Double, left : Double) -> Unit {
   with_editor(id, fn(editor) { editor.dispatch_scroll(top, left) })
 }
 
 ///|
-pub fn cm_focus_event(id : Int, focused : Int) -> Unit {
+pub fn cm_focus_event(id : Int32, focused : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.dispatch_focus(focused) })
 }
 
 ///|
-pub fn cm_paste(id : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_paste(id : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) { editor.dispatch_paste(text) })
 }
 
 ///|
-pub fn cm_input(id : Int, text : @ffi.JsAny) -> Int {
+pub fn cm_input(id : Int32, text : @ffi.JsAny) -> Int32 {
   match registry.get(id) {
     Some(editor) => if editor.dispatch_input(text) { 1 } else { 0 }
     None => 0
@@ -257,12 +262,12 @@ pub fn cm_input(id : Int, text : @ffi.JsAny) -> Int {
 }
 
 ///|
-pub fn cm_composition(id : Int, phase : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_composition(id : Int32, phase : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) { editor.dispatch_composition(phase, text) })
 }
 
 ///|
-pub fn cm_selected_text(id : Int) -> @ffi.JsAny {
+pub fn cm_selected_text(id : Int32) -> @ffi.JsAny {
   match registry.get(id) {
     Some(editor) => editor.selected_text()
     None => @ffi.js_string("")
@@ -270,72 +275,72 @@ pub fn cm_selected_text(id : Int) -> @ffi.JsAny {
 }
 
 ///|
-pub fn cm_resize(id : Int, width : Double, height : Double) -> Unit {
+pub fn cm_resize(id : Int32, width : Double, height : Double) -> Unit {
   let _ = (width, height)
   with_editor(id, fn(editor) { editor.view().render() })
 }
 
 ///|
-pub fn cm_fold_click(id : Int, line : Int) -> Unit {
+pub fn cm_fold_click(id : Int32, line : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.toggle_fold(line) })
 }
 
 ///|
-pub fn cm_search_open(id : Int) -> Unit {
+pub fn cm_search_open(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.open_search() })
 }
 
 ///|
-pub fn cm_search_close(id : Int) -> Unit {
+pub fn cm_search_close(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.close_search() })
 }
 
 ///|
-pub fn cm_search_query(id : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_search_query(id : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) {
     editor.set_search_query(@ffi.read_js_string(text))
   })
 }
 
 ///|
-pub fn cm_search_next(id : Int) -> Unit {
+pub fn cm_search_next(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.search_next() })
 }
 
 ///|
-pub fn cm_search_prev(id : Int) -> Unit {
+pub fn cm_search_prev(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.search_prev() })
 }
 
 ///|
-pub fn cm_search_replace(id : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_search_replace(id : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) {
     editor.search_replace(@ffi.read_js_string(text))
   })
 }
 
 ///|
-pub fn cm_search_replace_all(id : Int, text : @ffi.JsAny) -> Unit {
+pub fn cm_search_replace_all(id : Int32, text : @ffi.JsAny) -> Unit {
   with_editor(id, fn(editor) { editor.replace_all(@ffi.read_js_string(text)) })
 }
 
 ///|
-pub fn cm_undo(id : Int) -> Unit {
+pub fn cm_undo(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.undo() })
 }
 
 ///|
-pub fn cm_redo(id : Int) -> Unit {
+pub fn cm_redo(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.redo() })
 }
 
 ///|
-pub fn cm_fold_all(id : Int) -> Unit {
+pub fn cm_fold_all(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.fold_all() })
 }
 
 ///|
-pub fn cm_unfold_all(id : Int) -> Unit {
+pub fn cm_unfold_all(id : Int32) -> Unit {
   with_editor(id, fn(editor) { editor.unfold_all() })
 }
 

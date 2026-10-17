@@ -1,5 +1,5 @@
 ///|
-fn yaml_key_char(c : Int) -> Bool {
+fn yaml_key_char(c : Int32) -> Bool {
   is_word(c) || c == 45 || c == 46 || c == 47
 }
 
@@ -38,7 +38,7 @@ fn scan_decimal_number(sc : Scanner) -> Unit {
 ///|
 /// YAML: comments, `key:` property names, list markers, flow collections,
 /// anchors/aliases/tags and quoted or scalar values.
-fn yaml_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
+fn yaml_tokenizer(line : String, _state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut i = 0
   while i < sc.len && sc.code_at(i) == 32 {
@@ -218,7 +218,7 @@ pub fn sql_language() -> Language {
 
 ///|
 /// LaTeX: `%` comments, `\commands`, `$math$`, braces and plain text.
-fn latex_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
+fn latex_tokenizer(line : String, _state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   while !sc.eof() {
     let c = sc.peek(0)

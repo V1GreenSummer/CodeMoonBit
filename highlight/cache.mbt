@@ -3,7 +3,7 @@
 /// so that only the affected suffix is re-tokenized after an edit.
 pub struct HighlightCache {
   priv language : Language
-  priv states : Array[Int?]
+  priv states : Array[Int32?]
   priv lines : Array[Array[Token]?]
 }
 
@@ -13,7 +13,7 @@ pub fn HighlightCache::new(language : Language) -> HighlightCache {
 }
 
 ///|
-fn HighlightCache::ensure(self : HighlightCache, n : Int) -> Unit {
+fn HighlightCache::ensure(self : HighlightCache, n : Int32) -> Unit {
   while self.lines.length() < n {
     self.lines.push(None)
   }
@@ -28,7 +28,7 @@ fn HighlightCache::ensure(self : HighlightCache, n : Int) -> Unit {
 pub fn HighlightCache::tokens_for_line(
   self : HighlightCache,
   doc : @core.Text,
-  line : Int,
+  line : Int32,
 ) -> Array[Token] {
   self.tokens_and_state_for_line(doc, line).1
 }
@@ -39,8 +39,8 @@ pub fn HighlightCache::tokens_for_line(
 pub fn HighlightCache::tokens_and_state_for_line(
   self : HighlightCache,
   doc : @core.Text,
-  line : Int,
-) -> (Int, Array[Token]) {
+  line : Int32,
+) -> (Int32, Array[Token]) {
   let count = doc.lines()
   if count == 0 {
     return (0, [])
@@ -93,7 +93,7 @@ pub fn HighlightCache::tokens_and_state_for_line(
 /// be recomputed (and re-derived from an earlier valid state) on demand.
 pub fn HighlightCache::invalidate(
   self : HighlightCache,
-  from_line : Int,
+  from_line : Int32,
 ) -> Unit {
   let f = if from_line < 0 { 0 } else { from_line }
   if f >= self.lines.length() {

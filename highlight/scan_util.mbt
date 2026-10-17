@@ -1,6 +1,6 @@
 ///|
 /// Code unit at `i` in `s`, or `-1` when out of bounds.
-fn code_unit(s : String, i : Int) -> Int {
+fn code_unit(s : String, i : Int32) -> Int32 {
   if i < 0 || i >= s.length() {
     -1
   } else {
@@ -10,7 +10,7 @@ fn code_unit(s : String, i : Int) -> Int {
 
 ///|
 /// Whether `pat` occurs in `s` starting at `pos`.
-fn match_str(s : String, pos : Int, pat : String) -> Bool {
+fn match_str(s : String, pos : Int32, pat : String) -> Bool {
   let n = pat.length()
   if n == 0 || pos < 0 || pos + n > s.length() {
     return false
@@ -27,7 +27,7 @@ fn match_str(s : String, pos : Int, pat : String) -> Bool {
 
 ///|
 /// Whether the ASCII character `c` appears in `s`.
-fn ch_in(s : String, c : Int) -> Bool {
+fn ch_in(s : String, c : Int32) -> Bool {
   let mut i = 0
   while i < s.length() {
     if s.unsafe_get(i).to_int() == c {

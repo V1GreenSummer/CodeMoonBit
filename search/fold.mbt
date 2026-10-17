@@ -2,8 +2,8 @@
 /// A foldable block of lines. `from_line` stays visible, all lines up to and
 /// including `to_line` are hidden.
 pub struct FoldRange {
-  from_line : Int
-  to_line : Int
+  from_line : Int32
+  to_line : Int32
 } derive(Eq)
 
 ///|
@@ -119,7 +119,7 @@ fn is_blank_line(line : String) -> Bool {
 }
 
 ///|
-fn indent_width(line : String) -> Int {
+fn indent_width(line : String) -> Int32 {
   let mut width = 0
   let mut i = 0
   while i < line.length() {
@@ -137,7 +137,7 @@ fn indent_width(line : String) -> Int {
 }
 
 ///|
-fn code_end(line : String, line_comment : String?) -> Int {
+fn code_end(line : String, line_comment : String?) -> Int32 {
   match line_comment {
     Some(marker) if marker.length() > 0 =>
       match line.find(marker) {
@@ -149,7 +149,7 @@ fn code_end(line : String, line_comment : String?) -> Int {
 }
 
 ///|
-fn token_at(line : String, at : Int, token : String) -> Bool {
+fn token_at(line : String, at : Int32, token : String) -> Bool {
   if token.length() == 0 || at < 0 || at + token.length() > line.length() {
     return false
   }
@@ -193,7 +193,7 @@ pub fn compute_folds(
       folds.push({ from_line: line, to_line: last, })
     }
   }
-  let stack : Array[(Int, Int, Int)] = []
+  let stack : Array[(Int32, Int32, Int32)] = []
   for line = 0; line < line_count; line = line + 1 {
     let text = doc.line(line)
     let limit = code_end(text, line_comment)
@@ -258,7 +258,7 @@ fn fold_spec(folds : Array[FoldRange]) -> @state.TransactionSpec {
 }
 
 ///|
-fn cursor_line(state : @state.EditorState) -> Int {
+fn cursor_line(state : @state.EditorState) -> Int32 {
   state.doc().line_at(state.selection().main_range().head)
 }
 
@@ -287,7 +287,7 @@ pub fn fold_at(
 /// without relying on the cursor position.
 pub fn fold_line(
   state : @state.EditorState,
-  line : Int,
+  line : Int32,
   brackets : Array[(String, String)],
 ) -> @state.TransactionSpec? {
   match fold_state(state) {
@@ -365,7 +365,7 @@ pub fn unfold_at(state : @state.EditorState) -> @state.TransactionSpec? {
 /// Removes the fold starting at `line`, regardless of the cursor position.
 pub fn unfold_line(
   state : @state.EditorState,
-  line : Int,
+  line : Int32,
 ) -> @state.TransactionSpec? {
   match fold_state(state) {
     None => None
@@ -423,7 +423,7 @@ pub fn unfold_all(state : @state.EditorState) -> @state.TransactionSpec? {
 ///|
 /// True when `line` is hidden by a fold (the `from_line` of a fold remains
 /// visible).
-pub fn is_line_hidden(state : @state.EditorState, line : Int) -> Bool {
+pub fn is_line_hidden(state : @state.EditorState, line : Int32) -> Bool {
   match fold_state(state) {
     None => false
     Some(fold) => {
@@ -439,7 +439,7 @@ pub fn is_line_hidden(state : @state.EditorState, line : Int) -> Bool {
 
 ///|
 /// The first visible line at or after `line`, clamped to the document.
-pub fn next_visible_line(state : @state.EditorState, line : Int) -> Int {
+pub fn next_visible_line(state : @state.EditorState, line : Int32) -> Int32 {
   let line_count = state.line_count()
   if line_count == 0 {
     return 0
@@ -464,7 +464,7 @@ pub fn next_visible_line(state : @state.EditorState, line : Int) -> Int {
 
 ///|
 /// The first visible line at or before `line`, clamped to the document.
-pub fn prev_visible_line(state : @state.EditorState, line : Int) -> Int {
+pub fn prev_visible_line(state : @state.EditorState, line : Int32) -> Int32 {
   let line_count = state.line_count()
   if line_count == 0 {
     return 0

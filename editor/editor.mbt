@@ -1,8 +1,8 @@
 ///|
 /// A compiler/linter diagnostic rendered as an in-editor mark.
 pub(all) struct Diagnostic {
-  from : Int
-  to : Int
+  from : Int32
+  to : Int32
   severity : String
   message : String
 } derive(Debug, Eq)
@@ -17,10 +17,10 @@ pub extend Diagnostic with Eq::{not_equal, equal}
 /// A high-level editor instance bound to a DOM container.
 pub struct Editor {
   priv view : @view.EditorView
-  priv id : Int
+  priv id : Int32
   priv mut options : @view.ViewOptions
   priv mut comp_active : Bool
-  priv mut comp_from : Int?
+  priv mut comp_from : Int32?
   priv mut comp_text : String
   priv mut diagnostics : Array[Diagnostic]
 }
@@ -66,7 +66,7 @@ fn search_keymap() -> Array[@input.KeyBinding] {
 }
 
 ///|
-pub fn Editor::create(container : @ffi.JsAny, id : Int) -> Editor {
+pub fn Editor::create(container : @ffi.JsAny, id : Int32) -> Editor {
   let options = @view.ViewOptions::default()
   let state = @state.EditorState::create(
     config=default_extensions(),
@@ -89,7 +89,7 @@ pub fn Editor::create(container : @ffi.JsAny, id : Int) -> Editor {
 }
 
 ///|
-pub fn Editor::id(self : Editor) -> Int {
+pub fn Editor::id(self : Editor) -> Int32 {
   self.id
 }
 
@@ -109,7 +109,7 @@ fn language_of(options : @view.ViewOptions) -> @highlight.Language {
 }
 
 ///|
-fn is_line_visible(state : @state.EditorState, line : Int) -> Bool {
+fn is_line_visible(state : @state.EditorState, line : Int32) -> Bool {
   if state.has_field(@search.fold_field.id()) {
     !@search.is_line_hidden(state, line)
   } else {
@@ -223,7 +223,11 @@ pub fn Editor::set_doc(self : Editor, text : String) -> Unit {
 }
 
 ///|
-pub fn Editor::set_selection(self : Editor, anchor : Int, head : Int) -> Unit {
+pub fn Editor::set_selection(
+  self : Editor,
+  anchor : Int32,
+  head : Int32,
+) -> Unit {
   ignore(
     self.apply(
       @state.TransactionSpec::new(
@@ -308,7 +312,7 @@ fn parse_bool(value : String) -> Bool {
 }
 
 ///|
-fn parse_int(value : String, fallback : Int) -> Int {
+fn parse_int(value : String, fallback : Int32) -> Int32 {
   let mut i = 0
   let mut neg = false
   if value.length() > 0 && value.unsafe_get(0).to_int() == 45 {
@@ -404,10 +408,10 @@ pub fn Editor::dispatch_key(self : Editor, event : @input.KeyEvent) -> Bool {
 ///|
 pub fn Editor::dispatch_mouse(
   self : Editor,
-  kind : Int,
+  kind : Int32,
   x : Double,
   y : Double,
-  detail : Int,
+  detail : Int32,
 ) -> Bool {
   self.view.dispatch_mouse(kind, x, y, detail)
 }
@@ -422,7 +426,7 @@ pub fn Editor::dispatch_scroll(
 }
 
 ///|
-pub fn Editor::dispatch_focus(self : Editor, focused : Int) -> Unit {
+pub fn Editor::dispatch_focus(self : Editor, focused : Int32) -> Unit {
   self.view.dispatch_focus(focused)
 }
 
@@ -452,8 +456,8 @@ pub fn Editor::dispatch_input(self : Editor, text : @ffi.JsAny) -> Bool {
 /// change so consecutive updates merge into a single undo group.
 fn Editor::apply_composition_change(
   self : Editor,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
   text : String,
 ) -> Unit {
   let cs = @core.ChangeSet::of([@core.Change::new(from, to, text)])
@@ -481,7 +485,7 @@ fn Editor::apply_composition_change(
 /// composition. Surrounding text is never touched.
 pub fn Editor::dispatch_composition(
   self : Editor,
-  phase : Int,
+  phase : Int32,
   text : @ffi.JsAny,
 ) -> Unit {
   if self.options.read_only {
@@ -603,7 +607,7 @@ pub fn Editor::replace_all(self : Editor, replacement : String) -> Unit {
 }
 
 ///|
-pub fn Editor::toggle_fold(self : Editor, line : Int) -> Unit {
+pub fn Editor::toggle_fold(self : Editor, line : Int32) -> Unit {
   let state = self.state()
   if !state.has_field(@search.fold_field.id()) {
     return

@@ -14,22 +14,22 @@ pub struct EditorView {
   priv content : @ffi.JsAny
   priv gutter : @ffi.JsAny
   priv input : @ffi.JsAny
-  priv editor_id : Int
+  priv editor_id : Int32
   priv mut state : @state.EditorState
   priv mut options : ViewOptions
   priv mut language : @highlight.Language
   priv mut highlighter : @highlight.HighlightCache
   priv mut decorations : Array[Decoration]
   priv mut decorations_provider : ((@state.EditorState) -> Array[Decoration])?
-  priv mut line_filter : ((@state.EditorState, Int) -> Bool)?
-  priv char_widths : Map[Int, Double]
+  priv mut line_filter : ((@state.EditorState, Int32) -> Bool)?
+  priv char_widths : Map[Int32, Double]
   priv mut space_width : Double
   priv mut scroll_top : Double
   priv mut scroll_left : Double
   priv mut client_height : Double
   priv mut client_width : Double
   priv mut dragging : Bool
-  priv mut vis_lines : Array[Int]
+  priv mut vis_lines : Array[Int32]
   priv mut vis_tops : Array[Double]
   priv mut vis_heights : Array[Double]
   priv mut total_height : Double
@@ -38,7 +38,7 @@ pub struct EditorView {
   /// rebuilt glyph by glyph.
   priv mut line_html_cache : Array[(String, @ffi.JsAny)?]
   priv mut gutter_html_cache : Array[(String, @ffi.JsAny)?]
-  priv mut cache_gen : Int
+  priv mut cache_gen : Int32
   /// Allows host-initiated document replacement (`set_doc`) in read-only
   /// mode: read-only blocks user input, not programmatic value setting.
   priv mut host_edit : Bool
@@ -47,7 +47,7 @@ pub struct EditorView {
 ///|
 pub fn EditorView::new(
   container : @ffi.JsAny,
-  editor_id : Int,
+  editor_id : Int32,
   state : @state.EditorState,
   options : ViewOptions,
 ) -> EditorView {
@@ -99,7 +99,7 @@ pub fn EditorView::new(
 }
 
 ///|
-pub fn EditorView::id(self : EditorView) -> Int {
+pub fn EditorView::id(self : EditorView) -> Int32 {
   self.editor_id
 }
 
@@ -146,7 +146,7 @@ pub fn EditorView::set_decorations_provider(
 ///|
 pub fn EditorView::set_line_filter(
   self : EditorView,
-  filter : (@state.EditorState, Int) -> Bool,
+  filter : (@state.EditorState, Int32) -> Bool,
 ) -> Unit {
   self.line_filter = Some(filter)
 }
@@ -174,7 +174,7 @@ pub fn EditorView::destroy(self : EditorView) -> Unit {
 }
 
 ///|
-fn EditorView::is_visible(self : EditorView, line : Int) -> Bool {
+fn EditorView::is_visible(self : EditorView, line : Int32) -> Bool {
   match self.line_filter {
     Some(filter) => filter(self.state, line)
     None => true
@@ -182,12 +182,12 @@ fn EditorView::is_visible(self : EditorView, line : Int) -> Bool {
 }
 
 ///|
-fn EditorView::char_width(self : EditorView, code : Int) -> Double {
+fn EditorView::char_width(self : EditorView, code : Int32) -> Double {
   match self.char_widths.get(code) {
     Some(w) => w
     None => {
       let s = StringBuilder()
-      s.write_char(Int::unsafe_to_char(code))
+      s.write_char(Int32::unsafe_to_char(code))
       let w = @ffi.measure_text(self.options.font, s.to_string())
       self.char_widths.set(code, w)
       w
@@ -196,7 +196,7 @@ fn EditorView::char_width(self : EditorView, code : Int) -> Double {
 }
 
 ///|
-fn EditorView::layout_line(self : EditorView, line : Int) -> LineLayout {
+fn EditorView::layout_line(self : EditorView, line : Int32) -> LineLayout {
   let s = self.state.doc().line(line)
   let n = s.length()
   let xs = Array::make(n + 1, 0.0)
@@ -220,8 +220,8 @@ fn EditorView::layout_line(self : EditorView, line : Int) -> LineLayout {
       if next >= 0xDC00 && next <= 0xDFFF {
         xs[i + 1] = x
         let pair = StringBuilder()
-        pair.write_char(Int::unsafe_to_char(code))
-        pair.write_char(Int::unsafe_to_char(next))
+        pair.write_char(Int32::unsafe_to_char(code))
+        pair.write_char(Int32::unsafe_to_char(next))
         x = x + @ffi.measure_text(self.options.font, pair.to_string())
         i = i + 2
       } else {
@@ -248,8 +248,8 @@ fn EditorView::line_height_of(self : EditorView, layout : LineLayout) -> Double 
 }
 
 ///|
-fn EditorView::visible_lines(self : EditorView) -> Array[Int] {
-  let result : Array[Int] = []
+fn EditorView::visible_lines(self : EditorView) -> Array[Int32] {
+  let result : Array[Int32] = []
   if self.options.line_wrapping {
     for i = 0; i < self.state.line_count(); i = i + 1 {
       if self.is_visible(i) {
@@ -267,7 +267,10 @@ fn EditorView::visible_lines(self : EditorView) -> Array[Int] {
 }
 
 ///|
-fn EditorView::compute_viewport(self : EditorView, lines : Array[Int]) -> Unit {
+fn EditorView::compute_viewport(
+  self : EditorView,
+  lines : Array[Int32],
+) -> Unit {
   let tops : Array[Double] = []
   let heights : Array[Double] = []
   let mut total = 0.0
@@ -368,7 +371,7 @@ fn token_name(typ : @highlight.TokenType) -> String {
 }
 
 ///|
-fn EditorView::decoration_classes(self : EditorView, line : Int) -> String {
+fn EditorView::decoration_classes(self : EditorView, line : Int32) -> String {
   let buf = StringBuilder()
   for d in self.decorations {
     match d {
@@ -384,7 +387,7 @@ fn EditorView::decoration_classes(self : EditorView, line : Int) -> String {
 }
 
 ///|
-fn EditorView::fold_widget(self : EditorView, line : Int) -> Bool {
+fn EditorView::fold_widget(self : EditorView, line : Int32) -> Bool {
   for d in self.decorations {
     match d {
       Fold(l) => if l == line { return true }
@@ -396,7 +399,7 @@ fn EditorView::fold_widget(self : EditorView, line : Int) -> Bool {
 
 ///|
 /// True when `line` starts a foldable block that is not currently folded.
-fn EditorView::foldable_line(self : EditorView, line : Int) -> Bool {
+fn EditorView::foldable_line(self : EditorView, line : Int32) -> Bool {
   for d in self.decorations {
     match d {
       Foldable(l) => if l == line { return true }
@@ -601,7 +604,7 @@ fn EditorView::render_selections(
 
 ///|
 /// The y offset of a line, or -1 when the line is not currently laid out.
-fn EditorView::top_of_line(self : EditorView, line : Int) -> Double {
+fn EditorView::top_of_line(self : EditorView, line : Int32) -> Double {
   for i = 0; i < self.vis_lines.length(); i = i + 1 {
     if self.vis_lines[i] == line {
       return self.vis_tops[i]
@@ -629,7 +632,7 @@ fn EditorView::invalidate_render_cache(self : EditorView) -> Unit {
 ///|
 fn EditorView::cached_line_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   signature : String,
 ) -> @ffi.JsAny? {
   if line < 0 || line >= self.line_html_cache.length() {
@@ -644,7 +647,7 @@ fn EditorView::cached_line_html(
 ///|
 fn EditorView::put_line_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   signature : String,
   html : @ffi.JsAny,
 ) -> Unit {
@@ -657,7 +660,7 @@ fn EditorView::put_line_html(
 ///|
 fn EditorView::cached_gutter_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   signature : String,
 ) -> @ffi.JsAny? {
   if line < 0 || line >= self.gutter_html_cache.length() {
@@ -672,7 +675,7 @@ fn EditorView::cached_gutter_html(
 ///|
 fn EditorView::put_gutter_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   signature : String,
   html : @ffi.JsAny,
 ) -> Unit {
@@ -685,12 +688,12 @@ fn EditorView::put_gutter_html(
 ///|
 fn EditorView::build_line_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   top : Double,
-  main_line : Int,
+  main_line : Int32,
   text : String,
   tokens : Array[@highlight.Token],
-  starts : Array[Int],
+  starts : Array[Int32],
 ) -> @ffi.JsAny {
   let sb = @ffi.JsStringBuilder::new()
   let lh = self.options.line_height
@@ -744,10 +747,10 @@ fn EditorView::build_line_html(
 ///|
 fn EditorView::build_gutter_html(
   self : EditorView,
-  line : Int,
+  line : Int32,
   top : Double,
   height : Double,
-  main_line : Int,
+  main_line : Int32,
 ) -> @ffi.JsAny {
   let sb = @ffi.JsStringBuilder::new()
   sb.push("<div class=\"cm-gutter-line")
@@ -888,7 +891,7 @@ fn EditorView::publish_cursor_position(self : EditorView) -> Unit {
 }
 
 ///|
-fn EditorView::first_visible_index(self : EditorView) -> Int {
+fn EditorView::first_visible_index(self : EditorView) -> Int32 {
   for i = 0; i < self.vis_lines.length(); i = i + 1 {
     if self.vis_tops[i] + self.vis_heights[i] > self.scroll_top {
       return i
@@ -898,7 +901,10 @@ fn EditorView::first_visible_index(self : EditorView) -> Int {
 }
 
 ///|
-fn EditorView::last_visible_index_after(self : EditorView, from : Int) -> Int {
+fn EditorView::last_visible_index_after(
+  self : EditorView,
+  from : Int32,
+) -> Int32 {
   let bottom = self.scroll_top + self.client_height
   let mut i = from
   while i < self.vis_lines.length() {
@@ -913,13 +919,13 @@ fn EditorView::last_visible_index_after(self : EditorView, from : Int) -> Int {
 ///|
 /// Column offsets where visual segments of a line start, followed by the line
 /// length. Without wrapping this is `[0, n]`.
-fn EditorView::segment_starts(self : EditorView, line : Int) -> Array[Int] {
+fn EditorView::segment_starts(self : EditorView, line : Int32) -> Array[Int32] {
   let n = self.state.doc().line_length(line)
   if !self.options.line_wrapping || self.client_width <= 0.0 {
     return [0, n]
   }
   let layout = self.layout_line(line)
-  let starts : Array[Int] = [0]
+  let starts : Array[Int32] = [0]
   let mut seg_start = 0
   let mut i = 1
   while i <= n {
@@ -1037,7 +1043,11 @@ pub fn EditorView::set_doc(self : EditorView, text : String) -> Unit {
 }
 
 ///|
-fn EditorView::pos_at_coords(self : EditorView, x : Double, y : Double) -> Int {
+fn EditorView::pos_at_coords(
+  self : EditorView,
+  x : Double,
+  y : Double,
+) -> Int32 {
   let mut index = 0
   let mut found = false
   for i = 0; i < self.vis_lines.length(); i = i + 1 {
@@ -1073,7 +1083,7 @@ fn EditorView::pos_at_coords(self : EditorView, x : Double, y : Double) -> Int {
 }
 
 ///|
-fn EditorView::col_at_x(self : EditorView, line : Int, x : Double) -> Int {
+fn EditorView::col_at_x(self : EditorView, line : Int32, x : Double) -> Int32 {
   let doc = self.state.doc()
   let layout = self.layout_line(line)
   let n = doc.line_length(line)
@@ -1098,11 +1108,11 @@ fn EditorView::col_at_x(self : EditorView, line : Int, x : Double) -> Int {
 /// pair is closer to the pointer, so selections never split a code point.
 fn EditorView::snap_col(
   self : EditorView,
-  line : Int,
-  col : Int,
+  line : Int32,
+  col : Int32,
   x : Double,
   layout : LineLayout,
-) -> Int {
+) -> Int32 {
   let doc = self.state.doc()
   let n = doc.line_length(line)
   if col <= 0 || col >= n {
@@ -1128,10 +1138,10 @@ fn EditorView::snap_col(
 }
 
 ///|
-fn EditorView::word_boundaries(self : EditorView, pos : Int) -> @core.Range {
+fn EditorView::word_boundaries(self : EditorView, pos : Int32) -> @core.Range {
   let doc = self.state.doc()
   let text = doc.to_string()
-  let is_word = fn(code : Int) -> Bool {
+  let is_word = fn(code : Int32) -> Bool {
     (code >= 48 && code <= 57) ||
     (code >= 65 && code <= 90) ||
     (code >= 97 && code <= 122) ||
@@ -1181,8 +1191,8 @@ pub fn EditorView::selected_text(self : EditorView) -> @ffi.JsAny {
 ///|
 pub fn EditorView::select_range(
   self : EditorView,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
 ) -> Unit {
   let spec = @state.TransactionSpec::new(
     changes=@core.ChangeSet::empty(),
@@ -1195,8 +1205,8 @@ pub fn EditorView::select_range(
 ///|
 pub fn EditorView::replace_range(
   self : EditorView,
-  from : Int,
-  to : Int,
+  from : Int32,
+  to : Int32,
   text : String,
 ) -> Unit {
   let spec = @state.TransactionSpec::new(
@@ -1225,10 +1235,10 @@ pub fn EditorView::client_width(self : EditorView) -> Double {
 ///|
 pub fn EditorView::dispatch_mouse(
   self : EditorView,
-  kind : Int,
+  kind : Int32,
   x : Double,
   y : Double,
-  detail : Int,
+  detail : Int32,
 ) -> Bool {
   let doc = self.state.doc()
   let pos = self.pos_at_coords(x, y)
@@ -1336,7 +1346,7 @@ pub fn EditorView::dispatch_scroll(
 }
 
 ///|
-pub fn EditorView::dispatch_focus(self : EditorView, focused : Int) -> Unit {
+pub fn EditorView::dispatch_focus(self : EditorView, focused : Int32) -> Unit {
   if focused == 1 {
     self.render()
   }
@@ -1352,6 +1362,6 @@ pub fn EditorView::pos_at_coords_public(
   self : EditorView,
   x : Double,
   y : Double,
-) -> Int {
+) -> Int32 {
   self.pos_at_coords(x, y)
 }

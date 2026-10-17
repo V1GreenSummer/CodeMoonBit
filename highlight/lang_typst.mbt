@@ -25,7 +25,7 @@ fn typst_keyword(word : String) -> Bool {
 }
 
 ///|
-fn typst_slice(line : String, from : Int, to : Int) -> String {
+fn typst_slice(line : String, from : Int32, to : Int32) -> String {
   let buf = StringBuilder()
   let n = line.length()
   let mut i = from
@@ -38,12 +38,12 @@ fn typst_slice(line : String, from : Int, to : Int) -> String {
 }
 
 ///|
-fn typst_word_char(c : Int) -> Bool {
+fn typst_word_char(c : Int32) -> Bool {
   is_word(c) || c == 45 || c == 46
 }
 
 ///|
-fn typst_tokenizer(line : String, state : Int) -> (Array[Token], Int) {
+fn typst_tokenizer(line : String, state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut mode = if state >= 10 { 9 } else { state }
   let mut depth = if state >= 10 { state - 10 } else { 0 }

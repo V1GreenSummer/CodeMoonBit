@@ -2,8 +2,8 @@
 /// A single replacement: the half-open range `[from, to)` of the old document
 /// is replaced by `text`.
 pub(all) struct Change {
-  from : Int
-  to : Int
+  from : Int32
+  to : Int32
   text : String
 } derive(Eq)
 
@@ -11,7 +11,7 @@ pub(all) struct Change {
 pub extend Change with Eq::{not_equal, equal}
 
 ///|
-pub fn Change::new(from : Int, to : Int, text : String) -> Change {
+pub fn Change::new(from : Int32, to : Int32, text : String) -> Change {
   if from <= to {
     { from, to, text, }
   } else {
@@ -20,27 +20,27 @@ pub fn Change::new(from : Int, to : Int, text : String) -> Change {
 }
 
 ///|
-pub fn Change::insert(pos : Int, text : String) -> Change {
+pub fn Change::insert(pos : Int32, text : String) -> Change {
   { from: pos, to: pos, text, }
 }
 
 ///|
-pub fn Change::delete(from : Int, to : Int) -> Change {
+pub fn Change::delete(from : Int32, to : Int32) -> Change {
   { from, to, text: "", }
 }
 
 ///|
-pub fn Change::length(self : Change) -> Int {
+pub fn Change::length(self : Change) -> Int32 {
   self.to - self.from
 }
 
 ///|
-pub fn Change::new_length(self : Change) -> Int {
+pub fn Change::new_length(self : Change) -> Int32 {
   self.text.length()
 }
 
 ///|
-pub fn Change::delta(self : Change) -> Int {
+pub fn Change::delta(self : Change) -> Int32 {
   self.text.length() - (self.to - self.from)
 }
 
@@ -87,7 +87,7 @@ pub fn ChangeSet::changes(self : ChangeSet) -> Array[Change] {
 }
 
 ///|
-pub fn ChangeSet::length(self : ChangeSet) -> Int {
+pub fn ChangeSet::length(self : ChangeSet) -> Int32 {
   self.changes.length()
 }
 
@@ -132,7 +132,11 @@ pub fn ChangeSet::invert(self : ChangeSet, text : Text) -> ChangeSet {
 /// Maps a position in the original document through the change set.
 /// `assoc` < 0 associates the position with the text before the change,
 /// `assoc` >= 0 with the text after the change.
-pub fn ChangeSet::map_pos(self : ChangeSet, pos : Int, assoc : Int) -> Int {
+pub fn ChangeSet::map_pos(
+  self : ChangeSet,
+  pos : Int32,
+  assoc : Int32,
+) -> Int32 {
   let mut delta = 0
   for c in self.changes {
     if pos < c.from {
@@ -168,7 +172,7 @@ pub fn ChangeSet::map_pos(self : ChangeSet, pos : Int, assoc : Int) -> Int {
 pub fn ChangeSet::map_range(
   self : ChangeSet,
   range : Range,
-  assoc : Int,
+  assoc : Int32,
 ) -> Range {
   let from = self.map_pos(range.from, -1)
   let to = self.map_pos(range.to, assoc)
@@ -181,7 +185,7 @@ pub fn ChangeSet::map_range(
 
 ///|
 /// Returns the total length change of the document.
-pub fn ChangeSet::delta(self : ChangeSet) -> Int {
+pub fn ChangeSet::delta(self : ChangeSet) -> Int32 {
   let mut delta = 0
   for c in self.changes {
     delta = delta + c.delta()
@@ -190,7 +194,11 @@ pub fn ChangeSet::delta(self : ChangeSet) -> Int {
 }
 
 ///|
-pub fn ChangeSet::map_pos_bias(self : ChangeSet, pos : Int, bias : Int) -> Int {
+pub fn ChangeSet::map_pos_bias(
+  self : ChangeSet,
+  pos : Int32,
+  bias : Int32,
+) -> Int32 {
   if bias < 0 {
     self.map_pos(pos, -1)
   } else {

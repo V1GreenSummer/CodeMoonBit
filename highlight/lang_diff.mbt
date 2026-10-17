@@ -16,7 +16,7 @@ fn diff_meta_line(line : String) -> Bool {
 ///|
 /// Unified diff: hunk/header lines become `Meta`, added/removed lines carry an
 /// `Operator` marker plus their content, context lines are plain.
-fn diff_tokenizer(line : String, _state : Int) -> (Array[Token], Int) {
+fn diff_tokenizer(line : String, _state : Int32) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   if line.length() == 0 {
     return (sc.tokens, 0)

@@ -1,5 +1,5 @@
 ///|
-fn token_at_string(s : String, at : Int, token : String) -> Bool {
+fn token_at_string(s : String, at : Int32, token : String) -> Bool {
   if token.length() == 0 || at < 0 || at + token.length() > s.length() {
     return false
   }
@@ -14,7 +14,7 @@ fn token_at_string(s : String, at : Int, token : String) -> Bool {
 ///|
 fn match_forward(
   text : String,
-  at : Int,
+  at : Int32,
   open : String,
   close : String,
 ) -> @core.Range? {
@@ -41,7 +41,7 @@ fn match_forward(
 ///|
 fn match_backward(
   text : String,
-  at : Int,
+  at : Int32,
   open : String,
   close : String,
 ) -> @core.Range? {
@@ -73,7 +73,7 @@ fn match_backward(
 /// spans both brackets. Comments and strings are not skipped.
 pub fn matching_bracket(
   doc : @core.Text,
-  pos : Int,
+  pos : Int32,
   brackets : Array[(String, String)],
 ) -> @core.Range? {
   let text = doc.to_string()

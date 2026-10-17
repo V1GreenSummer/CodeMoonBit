@@ -1,9 +1,9 @@
 ///|
 /// Monotonic id generator shared by facets, fields and effects.
-let next_state_id : Ref[Int] = { val: 0, }
+let next_state_id : Ref[Int32] = { val: 0, }
 
 ///|
-pub fn fresh_state_id() -> Int {
+pub fn fresh_state_id() -> Int32 {
   let id = next_state_id.val
   next_state_id.val = id + 1
   id
@@ -13,7 +13,7 @@ pub fn fresh_state_id() -> Int {
 /// A facet is a labeled, typed configuration value. Multiple extensions may
 /// contribute values which are combined in extension order.
 pub struct Facet[T] {
-  priv id : Int
+  priv id : Int32
   priv default : () -> T
   priv combine : (T, T) -> T
   priv mut inputs : Array[() -> Unit]
@@ -34,7 +34,7 @@ pub fn[T] Facet::new(default~ : () -> T, combine~ : (T, T) -> T) -> Facet[T] {
 }
 
 ///|
-pub fn[T] Facet::id(self : Facet[T]) -> Int {
+pub fn[T] Facet::id(self : Facet[T]) -> Int32 {
   self.id
 }
 

@@ -6,13 +6,13 @@ pub struct EditorState {
   priv selection : @core.EditorSelection
   priv fields : Array[ErasedField]
   priv field_slots : Array[() -> Unit]
-  priv facet_slots : Array[(Int, () -> Unit)]
+  priv facet_slots : Array[(Int32, () -> Unit)]
   priv extensions : Extension
 }
 
 ///|
 pub fn EditorState::create(
-  config? : Array[Extension] = [],
+  config~ : Array[Extension] = [],
   doc? : @core.Text,
   selection? : @core.EditorSelection,
 ) -> EditorState {
@@ -30,8 +30,8 @@ pub fn EditorState::create(
     let (_, input, _) = item
     input()
   }
-  let facet_slots : Array[(Int, () -> Unit)] = []
-  let finalized : Array[Int] = []
+  let facet_slots : Array[(Int32, () -> Unit)] = []
+  let finalized : Array[Int32] = []
   for item in facet_items {
     let (id, _, finalize) = item
     if !finalized.contains(id) {
@@ -78,17 +78,17 @@ pub fn EditorState::extensions(self : EditorState) -> Extension {
 }
 
 ///|
-pub fn EditorState::length(self : EditorState) -> Int {
+pub fn EditorState::length(self : EditorState) -> Int32 {
   self.doc.length()
 }
 
 ///|
-pub fn EditorState::line_count(self : EditorState) -> Int {
+pub fn EditorState::line_count(self : EditorState) -> Int32 {
   self.doc.lines()
 }
 
 ///|
-pub fn EditorState::line(self : EditorState, line : Int) -> String {
+pub fn EditorState::line(self : EditorState, line : Int32) -> String {
   self.doc.line(line)
 }
 
@@ -98,12 +98,16 @@ pub fn EditorState::to_string(self : EditorState) -> String {
 }
 
 ///|
-pub fn EditorState::slice(self : EditorState, from : Int, to : Int) -> String {
+pub fn EditorState::slice(
+  self : EditorState,
+  from : Int32,
+  to : Int32,
+) -> String {
   self.doc.slice(from, to)
 }
 
 ///|
-fn EditorState::field_slot(self : EditorState, id : Int) -> (() -> Unit)? {
+fn EditorState::field_slot(self : EditorState, id : Int32) -> (() -> Unit)? {
   for i = 0; i < self.fields.length(); i = i + 1 {
     if self.fields[i].id == id {
       return Some(self.field_slots[i])
@@ -113,12 +117,12 @@ fn EditorState::field_slot(self : EditorState, id : Int) -> (() -> Unit)? {
 }
 
 ///|
-pub fn EditorState::has_field(self : EditorState, id : Int) -> Bool {
+pub fn EditorState::has_field(self : EditorState, id : Int32) -> Bool {
   self.field_slot(id) is Some(_)
 }
 
 ///|
-fn EditorState::facet_slot(self : EditorState, id : Int) -> (() -> Unit)? {
+fn EditorState::facet_slot(self : EditorState, id : Int32) -> (() -> Unit)? {
   for entry in self.facet_slots {
     let (fid, slot) = entry
     if fid == id {

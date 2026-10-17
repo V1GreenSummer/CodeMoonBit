@@ -4,7 +4,7 @@ pub struct SearchState {
   open : Bool
   query : SearchQuery
   matches : Array[@core.Range]
-  current : Int
+  current : Int32
   replace_text : String
 }
 
@@ -29,7 +29,7 @@ pub let set_query_effect : @state.StateEffect[SearchQuery] = @state.StateEffect:
 
 ///|
 /// Selects a match by index.
-pub let set_current_effect : @state.StateEffect[Int] = @state.StateEffect::new()
+pub let set_current_effect : @state.StateEffect[Int32] = @state.StateEffect::new()
 
 ///|
 /// Remembers the text the user last replaced with.
@@ -127,7 +127,7 @@ pub fn set_query(
 ///|
 fn select_relative(
   state : @state.EditorState,
-  delta : Int,
+  delta : Int32,
 ) -> @state.TransactionSpec? {
   match search_state(state) {
     None => None

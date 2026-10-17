@@ -38,7 +38,7 @@ fn selection_result(
 }
 
 ///|
-fn code_unit_at(doc : @core.Text, pos : Int) -> Int {
+fn code_unit_at(doc : @core.Text, pos : Int32) -> Int32 {
   if pos < 0 || pos >= doc.length() {
     return -1
   }
@@ -53,7 +53,7 @@ fn code_unit_at(doc : @core.Text, pos : Int) -> Int {
 
 ///|
 /// The code-unit offset just before `pos`, stepping over a full surrogate pair.
-pub fn prev_char_boundary(doc : @core.Text, pos : Int) -> Int {
+pub fn prev_char_boundary(doc : @core.Text, pos : Int32) -> Int32 {
   let p = if pos > doc.length() { doc.length() } else { pos }
   if p <= 0 {
     return 0
@@ -70,7 +70,7 @@ pub fn prev_char_boundary(doc : @core.Text, pos : Int) -> Int {
 
 ///|
 /// The code-unit offset just after `pos`, stepping over a full surrogate pair.
-pub fn next_char_boundary(doc : @core.Text, pos : Int) -> Int {
+pub fn next_char_boundary(doc : @core.Text, pos : Int32) -> Int32 {
   let len = doc.length()
   let p = if pos < 0 { 0 } else { pos }
   if p >= len {
@@ -87,7 +87,7 @@ pub fn next_char_boundary(doc : @core.Text, pos : Int) -> Int {
 }
 
 ///|
-fn spaces(count : Int) -> String {
+fn spaces(count : Int32) -> String {
   if count <= 0 {
     return ""
   }
@@ -163,7 +163,7 @@ pub fn delete_char_forward(
 }
 
 ///|
-fn unit_class(c : Int) -> Int {
+fn unit_class(c : Int32) -> Int32 {
   if c == 32 || c == 9 {
     0
   } else if (c >= 48 && c <= 57) ||
@@ -267,7 +267,7 @@ pub fn cursor_char_right(state : @state.EditorState) -> @state.TransactionSpec {
 ///|
 /// Clamps a column to the line length and snaps it left when it would fall
 /// inside a surrogate pair.
-fn snap_line_col(doc : @core.Text, line : Int, col : Int) -> Int {
+fn snap_line_col(doc : @core.Text, line : Int32, col : Int32) -> Int32 {
   let len = doc.line_length(line)
   let c = if col < 0 { 0 } else if col > len { len } else { col }
   if c <= 0 || c >= len {
@@ -373,7 +373,7 @@ pub fn cursor_visual_line_start(
 /// Moves each cursor `lines` lines up, preserving the column and clamping.
 pub fn page_up(
   state : @state.EditorState,
-  lines? : Int = 10,
+  lines~ : Int32 = 10,
 ) -> @state.TransactionSpec {
   let doc = state.doc()
   let ranges : Array[@core.SelectionRange] = []
@@ -389,7 +389,7 @@ pub fn page_up(
 /// Moves each cursor `lines` lines down, preserving the column and clamping.
 pub fn page_down(
   state : @state.EditorState,
-  lines? : Int = 10,
+  lines~ : Int32 = 10,
 ) -> @state.TransactionSpec {
   let doc = state.doc()
   let ranges : Array[@core.SelectionRange] = []
@@ -432,12 +432,12 @@ pub fn select_char_right(state : @state.EditorState) -> @state.TransactionSpec {
 }
 
 ///|
-fn is_space_unit(c : Int) -> Bool {
+fn is_space_unit(c : Int32) -> Bool {
   c == 32 || c == 9 || c == 10 || c == 13
 }
 
 ///|
-fn is_word_unit(c : Int) -> Bool {
+fn is_word_unit(c : Int32) -> Bool {
   (c >= 48 && c <= 57) ||
   (c >= 65 && c <= 90) ||
   (c >= 97 && c <= 122) ||
@@ -448,7 +448,7 @@ fn is_word_unit(c : Int) -> Bool {
 ///|
 /// The previous word boundary before `pos`, skipping whitespace first and
 /// then either a word run or a punctuation run.
-pub fn prev_word_boundary(doc : @core.Text, pos : Int) -> Int {
+pub fn prev_word_boundary(doc : @core.Text, pos : Int32) -> Int32 {
   let n = doc.length()
   let mut p = if pos > n { n } else { pos }
   while p > 0 && is_space_unit(code_unit_at(doc, p - 1)) {
@@ -473,7 +473,7 @@ pub fn prev_word_boundary(doc : @core.Text, pos : Int) -> Int {
 ///|
 /// The next word boundary after `pos`, skipping whitespace first and then
 /// either a word run or a punctuation run.
-pub fn next_word_boundary(doc : @core.Text, pos : Int) -> Int {
+pub fn next_word_boundary(doc : @core.Text, pos : Int32) -> Int32 {
   let n = doc.length()
   let mut p = if pos < 0 { 0 } else { pos }
   while p < n && is_space_unit(code_unit_at(doc, p)) {
@@ -673,10 +673,10 @@ fn line_commented(line : String, token : String) -> Bool {
 /// Comments or uncomments every line touched by the selection.
 pub fn toggle_line_comment(
   state : @state.EditorState,
-  token? : String = "//",
+  token~ : String = "//",
 ) -> @state.TransactionSpec {
   let doc = state.doc()
-  let lines : Array[Int] = []
+  let lines : Array[Int32] = []
   for r in state.selection().ranges() {
     for line in touched_lines(doc, r) {
       if !lines.contains(line) {

@@ -3,8 +3,8 @@
 /// terminators). Offsets use UTF-16 code units, like JavaScript strings.
 pub(all) struct Text {
   priv lines : Array[String]
-  priv starts : Array[Int]
-  priv len : Int
+  priv starts : Array[Int32]
+  priv len : Int32
 }
 
 ///|
@@ -15,7 +15,7 @@ pub fn Text::empty() -> Text {
 ///|
 pub fn Text::of(content : String) -> Text {
   let lines = content.split("\n").map(fn(v) { v.to_owned() }).to_array()
-  let starts : Array[Int] = []
+  let starts : Array[Int32] = []
   let mut len = 0
   for line in lines {
     starts.push(len)
@@ -28,22 +28,22 @@ pub fn Text::of(content : String) -> Text {
 }
 
 ///|
-pub fn Text::lines(self : Text) -> Int {
+pub fn Text::lines(self : Text) -> Int32 {
   self.lines.length()
 }
 
 ///|
-pub fn Text::line(self : Text, line : Int) -> String {
+pub fn Text::line(self : Text, line : Int32) -> String {
   self.lines[line]
 }
 
 ///|
-pub fn Text::line_length(self : Text, line : Int) -> Int {
+pub fn Text::line_length(self : Text, line : Int32) -> Int32 {
   self.lines[line].length()
 }
 
 ///|
-pub fn Text::length(self : Text) -> Int {
+pub fn Text::length(self : Text) -> Int32 {
   self.len
 }
 
@@ -53,17 +53,17 @@ pub fn Text::is_empty(self : Text) -> Bool {
 }
 
 ///|
-pub fn Text::line_start(self : Text, line : Int) -> Int {
+pub fn Text::line_start(self : Text, line : Int32) -> Int32 {
   self.starts[line]
 }
 
 ///|
-pub fn Text::line_end(self : Text, line : Int) -> Int {
+pub fn Text::line_end(self : Text, line : Int32) -> Int32 {
   self.starts[line] + self.lines[line].length()
 }
 
 ///|
-pub fn Text::line_at(self : Text, pos : Int) -> Int {
+pub fn Text::line_at(self : Text, pos : Int32) -> Int32 {
   let mut lo = 0
   let mut hi = self.lines.length() - 1
   while lo < hi {
@@ -78,13 +78,13 @@ pub fn Text::line_at(self : Text, pos : Int) -> Int {
 }
 
 ///|
-pub fn Text::line_col(self : Text, pos : Int) -> (Int, Int) {
+pub fn Text::line_col(self : Text, pos : Int32) -> (Int32, Int32) {
   let line = self.line_at(pos)
   (line, pos - self.starts[line])
 }
 
 ///|
-pub fn Text::pos(self : Text, line : Int, col : Int) -> Int {
+pub fn Text::pos(self : Text, line : Int32, col : Int32) -> Int32 {
   let l = if line < 0 {
     0
   } else if line >= self.lines.length() {
@@ -103,7 +103,7 @@ pub fn Text::pos(self : Text, line : Int, col : Int) -> Int {
 }
 
 ///|
-pub fn Text::clip_pos(self : Text, pos : Int) -> Int {
+pub fn Text::clip_pos(self : Text, pos : Int32) -> Int32 {
   if pos < 0 {
     0
   } else if pos > self.len {
@@ -116,7 +116,7 @@ pub fn Text::clip_pos(self : Text, pos : Int) -> Int {
 ///|
 /// True when `pos` is a legal offset, i.e. it does not fall between a high
 /// surrogate and its low surrogate.
-pub fn Text::is_char_boundary(self : Text, pos : Int) -> Bool {
+pub fn Text::is_char_boundary(self : Text, pos : Int32) -> Bool {
   if pos <= 0 || pos >= self.len {
     return true
   }
@@ -132,7 +132,7 @@ pub fn Text::is_char_boundary(self : Text, pos : Int) -> Bool {
 
 ///|
 /// Snaps an offset down to the nearest legal character boundary.
-pub fn Text::snap_pos_left(self : Text, pos : Int) -> Int {
+pub fn Text::snap_pos_left(self : Text, pos : Int32) -> Int32 {
   let p = self.clip_pos(pos)
   let mut result = p
   while result > 0 && !self.is_char_boundary(result) {
@@ -143,7 +143,7 @@ pub fn Text::snap_pos_left(self : Text, pos : Int) -> Int {
 
 ///|
 /// Snaps an offset up to the nearest legal character boundary.
-pub fn Text::snap_pos_right(self : Text, pos : Int) -> Int {
+pub fn Text::snap_pos_right(self : Text, pos : Int32) -> Int32 {
   let p = self.clip_pos(pos)
   let mut result = p
   while result < self.len && !self.is_char_boundary(result) {
@@ -153,7 +153,7 @@ pub fn Text::snap_pos_right(self : Text, pos : Int) -> Int {
 }
 
 ///|
-pub fn Text::slice(self : Text, from : Int, to : Int) -> String {
+pub fn Text::slice(self : Text, from : Int32, to : Int32) -> String {
   let cf = self.clip_pos(from)
   let ct = self.clip_pos(to)
   if cf >= ct {
@@ -183,9 +183,9 @@ pub fn Text::slice(self : Text, from : Int, to : Int) -> String {
 ///|
 pub fn Text::line_slice(
   self : Text,
-  line : Int,
-  from : Int,
-  to : Int,
+  line : Int32,
+  from : Int32,
+  to : Int32,
 ) -> String {
   let s = self.lines[line]
   let f0 = if from < 0 {
@@ -208,7 +208,7 @@ pub fn Text::line_slice(
 }
 
 ///|
-fn Text::is_line_boundary(self : Text, line : Int, col : Int) -> Bool {
+fn Text::is_line_boundary(self : Text, line : Int32, col : Int32) -> Bool {
   let s = self.lines[line]
   if col <= 0 || col >= s.length() {
     return true
@@ -233,7 +233,12 @@ pub fn Text::to_string(self : Text) -> String {
 }
 
 ///|
-pub fn Text::replace(self : Text, from : Int, to : Int, text : String) -> Text {
+pub fn Text::replace(
+  self : Text,
+  from : Int32,
+  to : Int32,
+  text : String,
+) -> Text {
   let cf = self.clip_pos(from)
   let ct = self.clip_pos(to)
   let f = self.snap_pos_left(cf)
@@ -274,7 +279,7 @@ pub fn Text::replace(self : Text, from : Int, to : Int, text : String) -> Text {
   for i = tl + 1; i < self.lines.length(); i = i + 1 {
     new_lines.push(self.lines[i])
   }
-  let new_starts : Array[Int] = []
+  let new_starts : Array[Int32] = []
   let mut len = 0
   for line in new_lines {
     new_starts.push(len)
@@ -308,7 +313,7 @@ pub fn Text::iter_lines(self : Text) -> Iter[String] {
 }
 
 ///|
-pub fn Text::substring(self : Text, from : Int, to : Int) -> String {
+pub fn Text::substring(self : Text, from : Int32, to : Int32) -> String {
   self.slice(from, to)
 }
 

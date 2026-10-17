@@ -13,9 +13,9 @@ pub extend SearchQuery with Eq::{not_equal, equal}
 ///|
 pub fn SearchQuery::new(
   text~ : String,
-  case_sensitive? : Bool = false,
-  whole_word? : Bool = false,
-  regex? : Bool = false,
+  case_sensitive~ : Bool = false,
+  whole_word~ : Bool = false,
+  regex~ : Bool = false,
 ) -> SearchQuery {
   { text, case_sensitive, whole_word, regex, }
 }
@@ -28,7 +28,7 @@ pub fn SearchQuery::new(
 pub fn find_matches(
   doc : @core.Text,
   query : SearchQuery,
-  limit? : Int = 1000,
+  limit~ : Int32 = 1000,
 ) -> Array[@core.Range] {
   if query.text == "" {
     return []
@@ -42,7 +42,7 @@ pub fn find_matches(
 }
 
 ///|
-fn clamp_code(value : Int, low : Int, high : Int) -> Int {
+fn clamp_code(value : Int32, low : Int32, high : Int32) -> Int32 {
   if value < low {
     low
   } else if value > high {
@@ -53,12 +53,12 @@ fn clamp_code(value : Int, low : Int, high : Int) -> Int {
 }
 
 ///|
-fn code_unit(s : String, index : Int) -> Int {
+fn code_unit(s : String, index : Int32) -> Int32 {
   s.unsafe_get(index).to_int()
 }
 
 ///|
-fn is_word_code(code : Int) -> Bool {
+fn is_word_code(code : Int32) -> Bool {
   (code >= 48 && code <= 57) ||
   (code >= 65 && code <= 90) ||
   (code >= 97 && code <= 122) ||
@@ -66,7 +66,7 @@ fn is_word_code(code : Int) -> Bool {
 }
 
 ///|
-fn lower_code(code : Int) -> Int {
+fn lower_code(code : Int32) -> Int32 {
   if code >= 65 && code <= 90 {
     code + 32
   } else {
@@ -75,7 +75,7 @@ fn lower_code(code : Int) -> Int {
 }
 
 ///|
-fn upper_code(code : Int) -> Int {
+fn upper_code(code : Int32) -> Int32 {
   if code >= 97 && code <= 122 {
     code - 32
   } else {
@@ -84,7 +84,7 @@ fn upper_code(code : Int) -> Int {
 }
 
 ///|
-fn units_equal(a : Int, b : Int, case_sensitive : Bool) -> Bool {
+fn units_equal(a : Int32, b : Int32, case_sensitive : Bool) -> Bool {
   if case_sensitive {
     a == b
   } else {
@@ -93,7 +93,7 @@ fn units_equal(a : Int, b : Int, case_sensitive : Bool) -> Bool {
 }
 
 ///|
-fn word_boundaries(s : String, from : Int, to : Int) -> Bool {
+fn word_boundaries(s : String, from : Int32, to : Int32) -> Bool {
   let before = from > 0 && is_word_code(code_unit(s, from - 1))
   let after = to < s.length() && is_word_code(code_unit(s, to))
   !before && !after
@@ -102,7 +102,7 @@ fn word_boundaries(s : String, from : Int, to : Int) -> Bool {
 ///|
 fn literal_eq_at(
   s : String,
-  at : Int,
+  at : Int32,
   needle : String,
   case_sensitive : Bool,
 ) -> Bool {
@@ -119,7 +119,7 @@ fn literal_eq_at(
 fn find_literal_matches(
   content : String,
   query : SearchQuery,
-  limit : Int,
+  limit : Int32,
 ) -> Array[@core.Range] {
   let result : Array[@core.Range] = []
   let n = query.text.length()

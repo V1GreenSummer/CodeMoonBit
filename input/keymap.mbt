@@ -1,31 +1,31 @@
 ///|
 /// Shift modifier bit for `KeyEvent.mods`.
-pub let mod_shift : Int = 1
+pub let mod_shift : Int32 = 1
 
 ///|
 /// Ctrl modifier bit for `KeyEvent.mods`.
-pub let mod_ctrl : Int = 2
+pub let mod_ctrl : Int32 = 2
 
 ///|
 /// Alt modifier bit for `KeyEvent.mods`.
-pub let mod_alt : Int = 4
+pub let mod_alt : Int32 = 4
 
 ///|
 /// Meta (Cmd/Win) modifier bit for `KeyEvent.mods`.
-pub let mod_meta : Int = 8
+pub let mod_meta : Int32 = 8
 
 ///|
 /// Platform bit for `KeyEvent.mods`: when set, `Mod` bindings map to the meta
 /// key (Apple platforms) instead of ctrl. Hosts set this bit together with the
 /// actual modifier bits of the event.
-pub let mod_platform : Int = 16
+pub let mod_platform : Int32 = 16
 
 ///|
 /// A normalized keyboard event as delivered by the DOM layer.
 pub(all) struct KeyEvent {
   key : String
   code : String
-  mods : Int
+  mods : Int32
 } derive(Eq)
 
 ///|
@@ -102,7 +102,7 @@ pub fn binding_spec(event : KeyEvent) -> String {
 
 ///|
 /// Parses a binding spec into `(modifier bits, uses Mod, base key)`.
-fn parse_key_spec(spec : String) -> (Int, Bool, String) {
+fn parse_key_spec(spec : String) -> (Int32, Bool, String) {
   let parts = spec.split("-").map(fn(part) { part.to_owned() }).to_array()
   let mut flags = 0
   let mut has_mod = false
@@ -143,7 +143,7 @@ fn parse_key_spec(spec : String) -> (Int, Bool, String) {
 fn key_spec_matches(
   binding_key : String,
   event_spec : String,
-  event_mods : Int,
+  event_mods : Int32,
 ) -> Bool {
   let (req, has_mod, base) = parse_key_spec(binding_key)
   let (ev, _, ev_base) = parse_key_spec(event_spec)

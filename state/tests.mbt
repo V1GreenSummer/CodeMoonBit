@@ -1,6 +1,8 @@
 ///|
 test "facet default and combine" {
-  let f : Facet[Int] = Facet::new(default=fn() { 1 }, combine=fn(a, b) { a + b })
+  let f : Facet[Int32] = Facet::new(default=fn() { 1 }, combine=fn(a, b) {
+    a + b
+  })
   let st = EditorState::create(config=[f.of(2), f.of(3)])
   assert_eq(st.facet(f), 6)
   let st2 = EditorState::create(config=[])
@@ -9,7 +11,7 @@ test "facet default and combine" {
 
 ///|
 test "state field init and update" {
-  let count : StateField[Int] = StateField::new(init=fn(_) { 0 }, update=fn(
+  let count : StateField[Int32] = StateField::new(init=fn(_) { 0 }, update=fn(
     old,
     tr,
   ) {
@@ -181,8 +183,8 @@ test "history group budget caps retained groups" {
 
 ///|
 test "field init reads earlier field in definition order" {
-  let a : StateField[Int] = StateField::new(init=fn(_) { 20 })
-  let b : StateField[Int] = StateField::new(init=fn(state) {
+  let a : StateField[Int32] = StateField::new(init=fn(_) { 20 })
+  let b : StateField[Int32] = StateField::new(init=fn(state) {
     state.field(a) + 2
   })
   let st = EditorState::create(config=[a.extension(), b.extension()])
@@ -194,8 +196,8 @@ test "field init reads earlier field in definition order" {
 /// A field whose `init` reads a field that comes later in the configuration
 /// (i.e. is still waiting to be initialized) aborts with a cycle diagnostic.
 test "panic field init reads later field aborts" {
-  let later : StateField[Int] = StateField::new(init=fn(_) { 1 })
-  let earlier : StateField[Int] = StateField::new(init=fn(state) {
+  let later : StateField[Int32] = StateField::new(init=fn(_) { 1 })
+  let earlier : StateField[Int32] = StateField::new(init=fn(state) {
     state.field(later)
   })
   let _ = EditorState::create(config=[earlier.extension(), later.extension()])

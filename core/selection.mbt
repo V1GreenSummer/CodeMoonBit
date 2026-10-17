@@ -1,8 +1,8 @@
 ///|
 /// A selection range with a fixed `anchor` and a moving `head`.
 pub(all) struct SelectionRange {
-  anchor : Int
-  head : Int
+  anchor : Int32
+  head : Int32
 } derive(Eq, Hash)
 
 ///|
@@ -12,17 +12,17 @@ pub extend SelectionRange with Eq::{not_equal, equal}
 pub extend SelectionRange with Hash::{hash, hash_combine}
 
 ///|
-pub fn SelectionRange::new(anchor : Int, head : Int) -> SelectionRange {
+pub fn SelectionRange::new(anchor : Int32, head : Int32) -> SelectionRange {
   { anchor, head, }
 }
 
 ///|
-pub fn SelectionRange::cursor(pos : Int) -> SelectionRange {
+pub fn SelectionRange::cursor(pos : Int32) -> SelectionRange {
   { anchor: pos, head: pos, }
 }
 
 ///|
-pub fn SelectionRange::from(self : SelectionRange) -> Int {
+pub fn SelectionRange::from(self : SelectionRange) -> Int32 {
   if self.anchor < self.head {
     self.anchor
   } else {
@@ -31,7 +31,7 @@ pub fn SelectionRange::from(self : SelectionRange) -> Int {
 }
 
 ///|
-pub fn SelectionRange::to(self : SelectionRange) -> Int {
+pub fn SelectionRange::to(self : SelectionRange) -> Int32 {
   if self.anchor > self.head {
     self.anchor
   } else {
@@ -45,7 +45,7 @@ pub fn SelectionRange::is_empty(self : SelectionRange) -> Bool {
 }
 
 ///|
-pub fn SelectionRange::length(self : SelectionRange) -> Int {
+pub fn SelectionRange::length(self : SelectionRange) -> Int32 {
   let d = self.head - self.anchor
   if d < 0 {
     -d
@@ -68,7 +68,7 @@ pub fn SelectionRange::as_range(self : SelectionRange) -> Range {
 }
 
 ///|
-pub fn SelectionRange::head_pos(self : SelectionRange) -> Int {
+pub fn SelectionRange::head_pos(self : SelectionRange) -> Int32 {
   self.head
 }
 
@@ -76,13 +76,13 @@ pub fn SelectionRange::head_pos(self : SelectionRange) -> Int {
 /// An ordered set of selection ranges plus the index of the main range.
 pub(all) struct EditorSelection {
   priv ranges : Array[SelectionRange]
-  priv main : Int
+  priv main : Int32
 }
 
 ///|
 pub fn EditorSelection::create(
   ranges : Array[SelectionRange],
-  main : Int,
+  main : Int32,
 ) -> EditorSelection {
   if ranges.length() == 0 {
     return { ranges: [SelectionRange::cursor(0)], main: 0, }
@@ -98,12 +98,12 @@ pub fn EditorSelection::create(
 }
 
 ///|
-pub fn EditorSelection::cursor(pos : Int) -> EditorSelection {
+pub fn EditorSelection::cursor(pos : Int32) -> EditorSelection {
   EditorSelection::create([SelectionRange::cursor(pos)], 0)
 }
 
 ///|
-pub fn EditorSelection::single(anchor : Int, head : Int) -> EditorSelection {
+pub fn EditorSelection::single(anchor : Int32, head : Int32) -> EditorSelection {
   EditorSelection::create([SelectionRange::new(anchor, head)], 0)
 }
 
@@ -113,12 +113,12 @@ pub fn EditorSelection::ranges(self : EditorSelection) -> Array[SelectionRange] 
 }
 
 ///|
-pub fn EditorSelection::range_count(self : EditorSelection) -> Int {
+pub fn EditorSelection::range_count(self : EditorSelection) -> Int32 {
   self.ranges.length()
 }
 
 ///|
-pub fn EditorSelection::main_index(self : EditorSelection) -> Int {
+pub fn EditorSelection::main_index(self : EditorSelection) -> Int32 {
   self.main
 }
 
@@ -130,7 +130,7 @@ pub fn EditorSelection::main_range(self : EditorSelection) -> SelectionRange {
 ///|
 pub fn EditorSelection::set_main_index(
   self : EditorSelection,
-  index : Int,
+  index : Int32,
 ) -> EditorSelection {
   EditorSelection::create(self.ranges, index)
 }
@@ -155,7 +155,7 @@ pub fn EditorSelection::eq(
 pub fn EditorSelection::add_range(
   self : EditorSelection,
   range : SelectionRange,
-  main? : Bool = false,
+  main~ : Bool = false,
 ) -> EditorSelection {
   let ranges = self.ranges.copy()
   ranges.push(range)
@@ -173,7 +173,7 @@ pub fn EditorSelection::add_range(
 pub fn EditorSelection::map(
   self : EditorSelection,
   changes : ChangeSet,
-  assoc? : Int = 1,
+  assoc~ : Int32 = 1,
 ) -> EditorSelection {
   let mapped : Array[SelectionRange] = []
   for r in self.ranges {

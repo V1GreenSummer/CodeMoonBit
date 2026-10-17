@@ -1,35 +1,35 @@
 ///|
-const STATE_BLOCK_BASE : Int = 1
+const STATE_BLOCK_BASE : Int32 = 1
 
 ///|
-const STATE_BLOCK_STRIDE : Int = 64
+const STATE_BLOCK_STRIDE : Int32 = 64
 
 ///|
-const STATE_TEMPLATE_BASE : Int = 1000
+const STATE_TEMPLATE_BASE : Int32 = 1000
 
 ///|
-const STATE_TRIPLE_BASE : Int = 1100
+const STATE_TRIPLE_BASE : Int32 = 1100
 
 ///|
-const STATE_QUOTE_BASE : Int = 1150
+const STATE_QUOTE_BASE : Int32 = 1150
 
 ///|
-const STATE_SPECIAL_BASE : Int = 1200
+const STATE_SPECIAL_BASE : Int32 = 1200
 
 ///|
-const STATE_RAW_BASE : Int = 1300
+const STATE_RAW_BASE : Int32 = 1300
 
 ///|
-const STATE_RUBY_BEGIN : Int = STATE_SPECIAL_BASE + 1
+const STATE_RUBY_BEGIN : Int32 = STATE_SPECIAL_BASE + 1
 
 ///|
-const STATE_CPPRAW : Int = STATE_SPECIAL_BASE + 3
+const STATE_CPPRAW : Int32 = STATE_SPECIAL_BASE + 3
 
 ///|
-const STATE_CSVERBATIM : Int = STATE_SPECIAL_BASE + 4
+const STATE_CSVERBATIM : Int32 = STATE_SPECIAL_BASE + 4
 
 ///|
-fn is_regex_prefix_char(c : Int) -> Bool {
+fn is_regex_prefix_char(c : Int32) -> Bool {
   c == 40 ||
   c == 44 ||
   c == 61 ||
@@ -73,7 +73,7 @@ fn is_regex_prefix_word(word : String) -> Bool {
 }
 
 ///|
-fn find_block_open(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_block_open(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.block_comments.length() {
     let (open, _) = cfg.block_comments[i]
@@ -86,7 +86,7 @@ fn find_block_open(cfg : LangConfig, sc : Scanner) -> Int {
 }
 
 ///|
-fn find_line_comment(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_line_comment(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.line_comments.length() {
     if sc.matches(cfg.line_comments[i]) {
@@ -98,7 +98,7 @@ fn find_line_comment(cfg : LangConfig, sc : Scanner) -> Int {
 }
 
 ///|
-fn find_template_open(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_template_open(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.templates.length() {
     if sc.matches(cfg.templates[i]) {
@@ -110,7 +110,7 @@ fn find_template_open(cfg : LangConfig, sc : Scanner) -> Int {
 }
 
 ///|
-fn find_triple_open(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_triple_open(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.triples.length() {
     if sc.matches(cfg.triples[i]) {
@@ -122,7 +122,7 @@ fn find_triple_open(cfg : LangConfig, sc : Scanner) -> Int {
 }
 
 ///|
-fn find_quote_open(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_quote_open(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.quotes.length() {
     if sc.matches(cfg.quotes[i]) {
@@ -136,7 +136,7 @@ fn find_quote_open(cfg : LangConfig, sc : Scanner) -> Int {
 ///|
 /// Index of a string prefix (Python-style `r`, `b`, `f`, ...) whose following
 /// code unit is a quote character.
-fn find_prefix(cfg : LangConfig, sc : Scanner) -> Int {
+fn find_prefix(cfg : LangConfig, sc : Scanner) -> Int32 {
   let mut i = 0
   while i < cfg.string_prefixes.length() {
     let p = cfg.string_prefixes[i]
@@ -159,8 +159,8 @@ fn scan_block_body(
   open : String,
   close : String,
   nested : Bool,
-  start_depth : Int,
-) -> Int {
+  start_depth : Int32,
+) -> Int32 {
   let start = sc.pos
   let mut depth = start_depth
   while !sc.eof() {
@@ -187,7 +187,7 @@ fn scan_block_body(
 fn scan_delimited(
   sc : Scanner,
   delim : String,
-  escape : Int,
+  escape : Int32,
   uses_escape : Bool,
   doubled : Bool,
 ) -> Bool {
@@ -216,7 +216,7 @@ fn scan_delimited(
 fn scan_quote_at(
   sc : Scanner,
   quote : String,
-  escape : Int,
+  escape : Int32,
   uses_escape : Bool,
   doubled : Bool,
 ) -> Bool {
@@ -237,7 +237,7 @@ fn scan_until_pair(sc : Scanner, pat : String) -> Bool {
 }
 
 ///|
-fn scan_raw_body(sc : Scanner, hashes : Int) -> Bool {
+fn scan_raw_body(sc : Scanner, hashes : Int32) -> Bool {
   while !sc.eof() {
     if sc.peek(0) == 34 {
       let mut ok = true
@@ -262,7 +262,7 @@ fn scan_raw_body(sc : Scanner, hashes : Int) -> Bool {
 ///|
 /// Scans the body of a prefixed string (the prefix is already consumed).
 /// Returns a continuation state or `0` when the string ended on this line.
-fn scan_prefixed_body(cfg : LangConfig, sc : Scanner, raw : Bool) -> Int {
+fn scan_prefixed_body(cfg : LangConfig, sc : Scanner, raw : Bool) -> Int32 {
   let uses_escape = !raw && cfg.quote_escapes
   let ti = find_triple_open(cfg, sc)
   if ti >= 0 {
@@ -294,7 +294,7 @@ fn scan_prefixed_body(cfg : LangConfig, sc : Scanner, raw : Bool) -> Int {
 }
 
 ///|
-fn scan_char_literal(sc : Scanner, escape : Int) -> Bool {
+fn scan_char_literal(sc : Scanner, escape : Int32) -> Bool {
   let save = sc.pos
   sc.pos = sc.pos + 1
   if sc.eof() {
@@ -483,7 +483,7 @@ fn scan_sigil(sc : Scanner) -> Unit {
 ///|
 /// Resumes a token that was left open at the end of the previous line.
 /// Returns the state for the next line (`0` when the token finished).
-fn resume_generic(cfg : LangConfig, sc : Scanner, st : Int) -> Int {
+fn resume_generic(cfg : LangConfig, sc : Scanner, st : Int32) -> Int32 {
   if cfg.templates.length() > 0 &&
     st >= cfg.state_template_base &&
     st < cfg.state_template_base + cfg.templates.length() {
@@ -565,8 +565,8 @@ fn resume_generic(cfg : LangConfig, sc : Scanner, st : Int) -> Int {
 fn generic_tokenize(
   cfg : LangConfig,
   line : String,
-  state : Int,
-) -> (Array[Token], Int) {
+  state : Int32,
+) -> (Array[Token], Int32) {
   let sc = Scanner::new(line)
   let mut st = state
   if st != 0 {
